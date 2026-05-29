@@ -140,6 +140,22 @@ body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-seri
 .ai-analyze-btn:disabled{opacity:.45;cursor:default}
 .ai-result{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;font-size:12.5px;color:var(--tx);line-height:1.75;white-space:pre-wrap}
 .ai-no-key{background:rgba(196,146,42,.12);border:1px solid var(--acc);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--acc);text-align:center}
+/* image analysis tab */
+#ai-image-tab{display:flex;flex-direction:column;gap:12px;padding:14px;overflow-y:auto;max-height:480px}
+.ai-img-upload-area{border:2px dashed var(--bd);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--ch)}
+.ai-img-upload-area:hover{border-color:var(--acc);background:var(--sur)}
+.ai-img-upload-area.has-img{border-style:solid;border-color:var(--acc)}
+.ai-img-preview{width:100%;max-height:200px;object-fit:contain;border-radius:8px;display:none;margin-top:6px}
+.ai-img-upload-icon{font-size:32px;margin-bottom:6px}
+.ai-img-upload-text{font-size:13px;color:var(--tx2)}
+.ai-img-upload-sub{font-size:11px;color:var(--tx2);margin-top:3px;opacity:.7}
+.ai-aspect-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ai-aspect-btn{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--tx2);cursor:pointer;text-align:right;transition:all .2s;display:flex;align-items:center;gap:6px}
+.ai-aspect-btn.selected{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}
+.ai-aspect-btn:hover:not(.selected){border-color:var(--acc);color:var(--acc)}
+.ai-full-btn{background:linear-gradient(135deg,var(--acc2),var(--acc));color:#fff;border:none;border-radius:10px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s;width:100%}
+.ai-full-btn:disabled{opacity:.4;cursor:default}
+.ai-analysis-result{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;font-size:13.5px;color:var(--tx);line-height:1.8;white-space:pre-wrap;max-height:260px;overflow-y:auto}
 </style>
 </head>
 <body>
@@ -1114,8 +1130,9 @@ function initAI() {
       <button class="ai-key-btn" onclick="saveAIKey()">שמור</button>
     </div>
     <div class="ai-tabs">
-      <button class="ai-tab active" id="ai-tab-chat" onclick="switchAITab('chat')">💬 שאל שאלה</button>
-      <button class="ai-tab" id="ai-tab-article" onclick="switchAITab('article')">📄 נתח מאמר</button>
+      <button class="ai-tab active" id="ai-tab-chat" onclick="switchAITab('chat')">💬 שאל</button>
+      <button class="ai-tab" id="ai-tab-article" onclick="switchAITab('article')">📄 מאמר</button>
+      <button class="ai-tab" id="ai-tab-image" onclick="switchAITab('image')">🖼 נתח ציור</button>
     </div>
     <div id="ai-chat-view" style="display:flex;flex-direction:column;">
       <div class="ai-messages" id="ai-msgs">
@@ -1126,13 +1143,37 @@ function initAI() {
         <button class="ai-send" id="ai-send-btn" onclick="sendAIChat()">➤</button>
       </div>
     </div>
-    <div id="ai-article-view" style="display:none;" class="" >
+    <div id="ai-article-view" style="display:none;">
       <div id="ai-article-tab">
         <label class="ai-file-label" for="ai-file">📎 לחצי להעלאת קובץ (.txt / .md) — או הדביקי טקסט למטה</label>
         <input type="file" id="ai-file" accept=".txt,.md" style="display:none" onchange="aiLoadFile(event)"/>
         <textarea class="ai-article-area" id="ai-article-text" placeholder="הדביקי כאן טקסט של מאמר, ספר, מדריך..."></textarea>
         <button class="ai-analyze-btn" id="ai-analyze-btn" onclick="aiAnalyzeArticle()">🔍 נתחי מאמר — מה ניתן להוסיף לאתר?</button>
         <div class="ai-result" id="ai-result" style="display:none"></div>
+      </div>
+    </div>
+    <div id="ai-image-view" style="display:none;">
+      <div id="ai-image-tab">
+        <label class="ai-img-upload-area" for="ai-img-file" id="ai-img-drop">
+          <div class="ai-img-upload-icon">🖼</div>
+          <div class="ai-img-upload-text">לחצי להעלאת ציור או תמונה</div>
+          <div class="ai-img-upload-sub">JPG, PNG, WEBP — עד 10MB</div>
+          <img class="ai-img-preview" id="ai-img-preview" alt="תצוגה מקדימה"/>
+        </label>
+        <input type="file" id="ai-img-file" accept="image/*" style="display:none" onchange="aiLoadImage(event)"/>
+        <div style="font-size:13px;font-weight:600;color:var(--tx2);margin-top:2px;">בחרי היבטים לניתוח:</div>
+        <div class="ai-aspect-grid" id="ai-aspects">
+          <button class="ai-aspect-btn selected" data-a="tonality">⬛ טונאליות</button>
+          <button class="ai-aspect-btn selected" data-a="color">🎨 צבע ורוויה</button>
+          <button class="ai-aspect-btn selected" data-a="composition">📐 קומפוזיציה</button>
+          <button class="ai-aspect-btn selected" data-a="focus">🎯 מוקד עניין</button>
+          <button class="ai-aspect-btn selected" data-a="light">💡 אור וצל</button>
+          <button class="ai-aspect-btn selected" data-a="perspective">🏔 פרספקטיבה</button>
+          <button class="ai-aspect-btn selected" data-a="technique">🖌 טכניקה</button>
+          <button class="ai-aspect-btn selected" data-a="suggest">✨ המלצות</button>
+        </div>
+        <button class="ai-full-btn" id="ai-img-btn" onclick="aiAnalyzeImage()" disabled>🔍 נתחי את הציור</button>
+        <div class="ai-analysis-result" id="ai-img-result" style="display:none"></div>
       </div>
     </div>`;
   document.body.appendChild(panel);
@@ -1152,8 +1193,89 @@ function toggleAI() {
 function switchAITab(tab) {
   document.getElementById('ai-chat-view').style.display = tab === 'chat' ? 'flex' : 'none';
   document.getElementById('ai-article-view').style.display = tab === 'article' ? 'block' : 'none';
-  document.getElementById('ai-tab-chat').classList.toggle('active', tab === 'chat');
-  document.getElementById('ai-tab-article').classList.toggle('active', tab === 'article');
+  document.getElementById('ai-image-view').style.display = tab === 'image' ? 'block' : 'none';
+  ['chat','article','image'].forEach(t => document.getElementById('ai-tab-'+t).classList.toggle('active', t === tab));
+}
+
+let aiImageBase64 = null;
+let aiImageMime = 'image/jpeg';
+
+function aiLoadImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  aiImageMime = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const dataUrl = ev.target.result;
+    aiImageBase64 = dataUrl.split(',')[1];
+    const preview = document.getElementById('ai-img-preview');
+    preview.src = dataUrl;
+    preview.style.display = 'block';
+    const drop = document.getElementById('ai-img-drop');
+    drop.classList.add('has-img');
+    drop.querySelector('.ai-img-upload-icon').textContent = '✅';
+    drop.querySelector('.ai-img-upload-text').textContent = file.name;
+    document.getElementById('ai-img-btn').disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+// toggle aspect buttons
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('ai-aspect-btn')) e.target.classList.toggle('selected');
+});
+
+async function aiAnalyzeImage() {
+  if (!aiImageBase64) return;
+  const key = localStorage.getItem('gemini_key');
+  if (!key) { alert('נא להזין מפתח API תחילה'); return; }
+
+  const selected = [...document.querySelectorAll('.ai-aspect-btn.selected')].map(b => b.dataset.a);
+  const aspectLabels = {
+    tonality:'טונאליות (ערכי אפל-בהיר, קונטרסט, סולם טון)',
+    color:'צבע ורוויה (גוונים, טמפרטורת צבע, הרמוניה, רוויה)',
+    composition:'קומפוזיציה (כלל השליש, איזון, הובלת עין, מסגור)',
+    focus:'מוקד עניין (איפה העין נמשכת ולמה)',
+    light:'אור וצל (מקור אור, צלליות, reflected light, עומק)',
+    perspective:'פרספקטיבה (עומק, אטמוספרה, מרחק)',
+    technique:'טכניקה (משיכות מכחול, מרקם, שכבתיות)',
+    suggest:'המלצות לשיפור (3-5 נקודות ספציפיות)'
+  };
+
+  const aspects = selected.map(a => `• ${aspectLabels[a]}`).join('\n');
+  const prompt = `אנא נתחי את הציור/התמונה הזו בפירוט רב לפי ההיבטים הבאים:\n\n${aspects}\n\nבכל היבט:\n- תארי מה קיים בציור\n- הערכה (חזק/דורש שיפור)\n- טיפ ספציפי לשיפור\n\nעני בעברית בלבד. בנה את התשובה בצורה ברורה עם כותרות לכל היבט.`;
+
+  const btn = document.getElementById('ai-img-btn');
+  const result = document.getElementById('ai-img-result');
+  btn.disabled = true;
+  btn.textContent = '⏳ מנתח...';
+  result.style.display = 'block';
+  result.textContent = 'הAI מנתח את הציור שלך...';
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { inline_data: { mime_type: aiImageMime, data: aiImageBase64 } },
+              { text: prompt }
+            ]
+          }]
+        })
+      }
+    );
+    const data = await res.json();
+    if (data.error) { result.textContent = 'שגיאה: ' + data.error.message; }
+    else { result.textContent = data.candidates?.[0]?.content?.parts?.[0]?.text || 'לא התקבלה תשובה.'; }
+  } catch(err) {
+    result.textContent = 'שגיאת חיבור — בדקי אינטרנט ומפתח.';
+  }
+  btn.disabled = false;
+  btn.textContent = '🔍 נתחי שוב';
 }
 
 function saveAIKey() {
