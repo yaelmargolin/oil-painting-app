@@ -5,20 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>אמנות הרישום</title>
 <style>
-:root{--bg:#18161a;--sur:#211f24;--card:#2a272e;--ch:#332f38;--acc:#d4a843;--acc2:#c0603a;--tx:#f0ece4;--tx2:#9a9090;--bd:#3a3740;--r:14px}
-.lm{--bg:#f5f0ea;--sur:#ede8e2;--card:#fff;--ch:#f8f4ef;--acc:#9a7020;--acc2:#b04020;--tx:#1e1c1a;--tx2:#666;--bd:#ddd5c8}
+:root{--bg:#faf7f2;--sur:#f0ebe2;--card:#fff;--ch:#f5efe5;--acc:#8a6010;--acc2:#a03820;--tx:#1a1610;--tx2:#5a5040;--bd:#d8cdb8;--r:14px}
+.dm{--bg:#18161a;--sur:#211f24;--card:#2a272e;--ch:#332f38;--acc:#d4a843;--acc2:#c0603a;--tx:#f0ece4;--tx2:#9a9090;--bd:#3a3740}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-serif;min-height:100vh;direction:rtl;transition:background .3s,color .3s}
+body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-serif;min-height:100vh;direction:rtl;transition:background .3s,color .3s;font-size:17px}
 #app{max-width:920px;margin:0 auto;padding:0 16px 60px}
 /* header */
 .hdr{display:flex;align-items:center;justify-content:space-between;padding:20px 0 12px;border-bottom:1px solid var(--bd);margin-bottom:28px}
-.hdr-title{font-size:22px;font-weight:800;color:var(--acc);letter-spacing:.5px}
-.hdr-sub{font-size:12px;color:var(--tx2);margin-top:2px}
+.hdr-title{font-size:26px;font-weight:800;color:var(--acc);letter-spacing:.5px}
+.hdr-sub{font-size:14px;color:var(--tx2);margin-top:2px}
 .hdr-btns{display:flex;gap:8px}
 .ico-btn{background:none;border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:6px 13px;cursor:pointer;font-size:13px;transition:all .2s}
 .ico-btn:hover{border-color:var(--acc);color:var(--acc)}
 /* home */
-.welcome{text-align:center;padding:10px 0 30px;color:var(--tx2);font-size:15px;line-height:1.7}
+.welcome{text-align:center;padding:10px 0 30px;color:var(--tx2);font-size:18px;line-height:1.7}
 .welcome strong{color:var(--tx)}
 .home-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:20px}
 .hcard{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:28px 24px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
@@ -26,30 +26,30 @@ body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-seri
 .hcard:hover{background:var(--ch);transform:translateY(-4px);box-shadow:0 10px 28px #0005}
 .hcard:hover::after{transform:scaleX(1)}
 .hcard-icon{font-size:38px;margin-bottom:14px}
-.hcard-title{font-size:19px;font-weight:700;color:var(--acc);margin-bottom:8px}
-.hcard-desc{font-size:13px;color:var(--tx2);line-height:1.6}
+.hcard-title{font-size:22px;font-weight:700;color:var(--acc);margin-bottom:8px}
+.hcard-desc{font-size:16px;color:var(--tx2);line-height:1.7}
 /* section list */
 .sec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap}
 .back-btn{background:none;border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:7px 15px;cursor:pointer;font-size:13px;transition:all .2s;white-space:nowrap}
 .back-btn:hover{border-color:var(--acc);color:var(--acc)}
-.sec-title{font-size:21px;font-weight:700;color:var(--tx)}
+.sec-title{font-size:24px;font-weight:700;color:var(--tx)}
 .items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:16px}
 .icard{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:20px;cursor:pointer;transition:all .2s}
 .icard:hover{background:var(--ch);transform:translateY(-2px);box-shadow:0 6px 18px #0003;border-color:var(--acc)}
 .icard-num{font-size:11px;color:var(--tx2);margin-bottom:5px}
-.icard-title{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:5px}
-.icard-sub{font-size:12px;color:var(--tx2)}
+.icard-title{font-size:18px;font-weight:600;color:var(--tx);margin-bottom:5px}
+.icard-sub{font-size:15px;color:var(--tx2)}
 /* detail */
 .detail{max-width:740px;margin:0 auto}
-.dtitle{font-size:26px;font-weight:800;color:var(--acc);margin-bottom:4px}
-.dsub{font-size:14px;color:var(--tx2);margin-bottom:22px}
-.dbody{font-size:15px;line-height:1.85;color:var(--tx);margin-bottom:20px}
+.dtitle{font-size:30px;font-weight:800;color:var(--acc);margin-bottom:4px}
+.dsub{font-size:17px;color:var(--tx2);margin-bottom:22px}
+.dbody{font-size:18px;line-height:1.9;color:var(--tx);margin-bottom:20px}
 .svg-wrap{background:var(--sur);border:1px solid var(--bd);border-radius:var(--r);padding:20px;margin:20px 0;text-align:center}
 .svg-lbl{font-size:12px;color:var(--tx2);margin-top:10px;font-style:italic}
 .tips{background:var(--sur);border-right:3px solid var(--acc);border-radius:8px;padding:16px 20px;margin:20px 0}
-.tips-t{font-size:14px;font-weight:700;color:var(--acc);margin-bottom:10px}
+.tips-t{font-size:17px;font-weight:700;color:var(--acc);margin-bottom:10px}
 .tips ul{list-style:none;padding:0}
-.tips li{font-size:14px;color:var(--tx);padding:5px 0;border-bottom:1px solid var(--bd)}
+.tips li{font-size:17px;color:var(--tx);padding:7px 0;border-bottom:1px solid var(--bd)}
 .tips li:last-child{border:none}
 .tips li::before{content:'▸ ';color:var(--acc)}
 /* tutorial steps */
@@ -57,8 +57,8 @@ body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-seri
 .step{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:20px;display:flex;gap:18px;align-items:flex-start}
 .step-n{background:var(--acc);color:#111;font-weight:800;font-size:15px;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
 .step-body{flex:1}
-.step-title{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:5px}
-.step-desc{font-size:13px;color:var(--tx2);line-height:1.65}
+.step-title{font-size:18px;font-weight:600;color:var(--tx);margin-bottom:5px}
+.step-desc{font-size:16px;color:var(--tx2);line-height:1.7}
 .step-svg{margin-top:14px;background:var(--sur);border-radius:8px;padding:12px;text-align:center}
 /* artwork */
 .art-hdr{display:flex;gap:22px;align-items:flex-start;margin-bottom:24px}
@@ -67,21 +67,23 @@ body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-seri
 .art-artist{font-size:18px;font-weight:700;color:var(--tx);margin-bottom:3px}
 .art-year{font-size:13px;color:var(--tx2);margin-bottom:6px}
 .art-period{display:inline-block;background:var(--acc);color:#111;font-size:11px;font-weight:700;padding:3px 11px;border-radius:20px;margin-bottom:12px}
-.art-desc{font-size:14px;color:var(--tx);line-height:1.75}
+.art-desc{font-size:17px;color:var(--tx);line-height:1.8}
 .tags{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
 .tag{background:var(--sur);border:1px solid var(--bd);color:var(--tx2);font-size:12px;padding:4px 12px;border-radius:20px}
 .analysis-t{font-size:16px;font-weight:700;color:var(--acc);margin:20px 0 10px}
-.analysis-b{font-size:14px;color:var(--tx);line-height:1.75}
+.analysis-b{font-size:17px;color:var(--tx);line-height:1.8}
 @media(max-width:600px){.art-hdr{flex-direction:column}.step{flex-direction:column}.home-grid{grid-template-columns:1fr}}
 /* ── Oil Painting ── */
-.oil-intro{font-size:14.5px;color:var(--tx);line-height:1.9;margin-bottom:18px;padding-right:16px;border-right:3px solid var(--acc)}
-.oil-details{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin:18px 0}
-.oil-card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px 18px;border-top:3px solid var(--acc)}
-.oil-card h4{font-size:13px;font-weight:700;color:var(--acc);margin-bottom:8px}
-.oil-card p{font-size:13px;color:var(--tx2);line-height:1.7}
-.oil-badge{display:inline-block;background:linear-gradient(135deg,var(--acc2),var(--acc));color:#fff;font-size:11px;font-weight:700;padding:3px 13px;border-radius:20px;margin-bottom:12px;letter-spacing:.5px}
-.hcard.oil-main{background:linear-gradient(135deg,#2a1800,#3d2b0a);border:2px solid var(--acc)!important;grid-column:1/-1}
-.hcard.oil-main:hover{background:linear-gradient(135deg,#3d2b10,#4d3b18)}
+.oil-intro{font-size:18px;color:var(--tx);line-height:1.9;margin-bottom:18px;padding-right:16px;border-right:4px solid var(--acc)}
+.oil-details{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin:18px 0}
+.oil-card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:18px 20px;border-top:3px solid var(--acc)}
+.oil-card h4{font-size:16px;font-weight:700;color:var(--acc);margin-bottom:10px}
+.oil-card p{font-size:16px;color:var(--tx2);line-height:1.75}
+.oil-badge{display:inline-block;background:linear-gradient(135deg,var(--acc2),var(--acc));color:#fff;font-size:13px;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:12px;letter-spacing:.5px}
+.hcard.oil-main{background:linear-gradient(135deg,#fff8ec,#fef3dc);border:2px solid var(--acc)!important;grid-column:1/-1}
+.hcard.oil-main:hover{background:linear-gradient(135deg,#fef3dc,#fde8bc)}
+.dm .hcard.oil-main{background:linear-gradient(135deg,#2a1800,#3d2b0a)}
+.dm .hcard.oil-main:hover{background:linear-gradient(135deg,#3d2b10,#4d3b18)}
 .hcard.oil-main .hcard-title{color:var(--acc);font-size:22px}
 .hcard.oil-main .hcard-desc{font-size:14px;line-height:1.7}
 .hcard.oil-main::after{background:linear-gradient(90deg,var(--acc2),var(--acc))}
@@ -90,13 +92,13 @@ body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-seri
 .oil-section-hdr{font-size:14px;font-weight:700;color:var(--tx);margin:22px 0 10px;padding-right:12px;border-right:3px solid var(--acc2)}
 .oil-exercises{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:6px}
 .oil-exercise{background:var(--ch);border:1px solid #3a5a3a;border-radius:8px;padding:14px;border-right:3px solid #5a9a5a}
-.oil-exercise h4{font-size:12.5px;color:#7aba7a;margin-bottom:6px;font-weight:700}
-.oil-exercise p{font-size:12px;color:var(--tx2);line-height:1.65}
+.oil-exercise h4{font-size:15px;color:#5a8a5a;margin-bottom:6px;font-weight:700}
+.oil-exercise p{font-size:15px;color:var(--tx2);line-height:1.7}
 .oil-mistakes-list{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
 .oil-mistake{background:var(--ch);border:1px solid var(--bd);border-radius:8px;padding:12px 14px;border-right:3px solid var(--acc2);display:flex;gap:12px;align-items:flex-start}
 .oil-mistake-icon{font-size:15px;flex-shrink:0;margin-top:1px}
-.oil-mistake-body h4{font-size:12.5px;color:var(--acc2);margin-bottom:3px;font-weight:700}
-.oil-mistake-body p{font-size:12px;color:var(--tx2);line-height:1.6}
+.oil-mistake-body h4{font-size:15px;color:var(--acc2);margin-bottom:4px;font-weight:700}
+.oil-mistake-body p{font-size:15px;color:var(--tx2);line-height:1.7}
 .masters-box{background:linear-gradient(135deg,rgba(196,146,42,.08),rgba(192,96,58,.08))!important;border-color:var(--acc)!important}
 .masters-box p{font-size:13px;color:var(--tx);line-height:1.75;margin:0}
 /* ── AI Chat Panel ── */
@@ -104,7 +106,7 @@ body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-seri
 #ai-btn:hover{transform:scale(1.1);box-shadow:0 6px 24px #0009}
 #ai-panel{position:fixed;bottom:92px;left:24px;width:370px;max-height:580px;background:var(--sur);border:1px solid var(--bd);border-radius:18px;box-shadow:0 10px 40px #000a;z-index:1000;display:none;flex-direction:column;overflow:hidden}
 #ai-panel.open{display:flex}
-.ai-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;border-bottom:1px solid var(--bd);background:linear-gradient(135deg,#2a1a08,#3a2810)}
+.ai-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;border-bottom:1px solid var(--bd);background:var(--ch)}
 .ai-hdr-title{font-weight:800;color:var(--acc);font-size:15px}
 .ai-hdr-sub{font-size:11px;color:var(--tx2);margin-top:1px}
 .ai-close{background:none;border:1px solid var(--bd);color:var(--tx2);font-size:15px;cursor:pointer;padding:3px 9px;border-radius:6px;transition:all .2s}
@@ -1073,7 +1075,7 @@ function renderDetail() {
 
 /* ── Theme ── */
 let light = false;
-function toggleTheme(){light=!light;document.body.classList.toggle('lm',light);}
+function toggleTheme(){light=!light;document.body.classList.toggle('dm',light);}
 
 /* ── Init ── */
 render();
