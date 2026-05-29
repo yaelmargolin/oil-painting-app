@@ -43,8 +43,8 @@ body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-seri
 /* detail */
 .detail{max-width:740px;margin:0 auto}
 .dtitle{font-size:30px;font-weight:800;color:var(--acc);margin-bottom:4px}
-.dsub{font-size:17px;color:var(--tx2);margin-bottom:22px}
-.dbody{font-size:18px;line-height:1.9;color:var(--tx);margin-bottom:20px}
+.dsub{font-size:17px;color:var(--tx2);margin-bottom:10px}
+.dbody{font-size:18px;line-height:1.9;color:var(--tx);margin-bottom:12px}
 .svg-wrap{background:var(--sur);border:1px solid var(--bd);border-radius:var(--r);padding:20px;margin:20px 0;text-align:center}
 .svg-lbl{font-size:12px;color:var(--tx2);margin-top:10px;font-style:italic}
 .tips{background:var(--sur);border-right:3px solid var(--acc);border-radius:8px;padding:16px 20px;margin:20px 0}
@@ -89,11 +89,13 @@ body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-seri
 .hcard.ai-card .hcard-title{color:#2a5080}
 .dm .hcard.ai-card{background:linear-gradient(135deg,#1a2234,#1e2840);border-color:#5580aa}
 .dm .hcard.ai-card .hcard-title{color:#7ab0e0}
+.hcard.ai-card-hero{padding:32px 36px;border-width:3px;box-shadow:0 4px 20px rgba(74,106,154,.18)}
+.hcard.ai-card-hero:hover{box-shadow:0 10px 32px rgba(74,106,154,.28)}
 .hcard.oil-main .hcard-title{color:var(--acc);font-size:22px}
 .hcard.oil-main .hcard-desc{font-size:14px;line-height:1.7}
 .hcard.oil-main::after{background:linear-gradient(90deg,var(--acc2),var(--acc))}
-.oil-sec-title{font-size:22px;font-weight:800;color:var(--acc);margin-bottom:4px}
-.oil-sec-sub{font-size:13px;color:var(--tx2);margin-bottom:22px}
+.oil-sec-title{font-size:22px;font-weight:800;color:var(--acc);margin-bottom:2px}
+.oil-sec-sub{font-size:13px;color:var(--tx2);margin-bottom:10px}
 .oil-section-hdr{font-size:14px;font-weight:700;color:var(--tx);margin:22px 0 10px;padding-right:12px;border-right:3px solid var(--acc2)}
 .oil-exercises{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:6px}
 .oil-exercise{background:var(--ch);border:1px solid #3a5a3a;border-radius:8px;padding:14px;border-right:3px solid #5a9a5a}
@@ -1057,8 +1059,16 @@ function render() {
 }
 
 function renderHome() {
-  return `<div class="welcome"><strong>ברוכים הבאים</strong><br>בחרי נושא לעיון — ציור בצבעי שמן, טכניקות רישום, הדרכות שלב-אחר-שלב, או ניתוח יצירות.</div>
-  <div class="home-grid">
+  return `<div class="home-grid">
+    <div class="hcard ai-card ai-card-hero" onclick="setView('ai',null,null)">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div style="font-size:48px">🤖</div>
+        <div>
+          <div class="hcard-title" style="font-size:26px;margin-bottom:6px">עוזר AI לציור</div>
+          <div class="hcard-desc" style="font-size:17px">שאלות על טכניקות, ניתוח מאמרים, ניתוח ציורים מפורט — לחצי להתחיל</div>
+        </div>
+      </div>
+    </div>
     <div class="hcard oil-main" onclick="setView('list','oil',null)">
       <div class="hcard-icon">🎨</div>
       <div class="hcard-title">ציור בצבעי שמן</div>
@@ -1078,11 +1088,6 @@ function renderHome() {
       <div class="hcard-icon">🖼</div>
       <div class="hcard-title">ניתוח יצירות</div>
       <div class="hcard-desc">מונה ליזה, הלילה הכוכבי, הצעקה, ורמיר ובוטיצ'לי — ניתוח טכני ואמנותי.</div>
-    </div>
-    <div class="hcard ai-card" onclick="setView('ai',null,null)">
-      <div class="hcard-icon">🤖</div>
-      <div class="hcard-title">עוזר AI לציור</div>
-      <div class="hcard-desc">שאלות על טכניקות ציור, ניתוח מאמרים, וניתוח ציורים מפורט עם Gemini AI — תשובות גדולות וקריאות.</div>
     </div>
     <div class="hcard painters-card" onclick="setView('painters',null,null)">
       <div class="hcard-icon">🖌</div>
