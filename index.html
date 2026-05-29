@@ -1097,6 +1097,8 @@ function toggleTheme(){light=!light;document.body.classList.toggle('dm',light);}
 render();
 
 /* ── AI Chat ── */
+const GEMINI_MODEL = 'gemini-2.5-flash';
+
 const AI_SYSTEM = `אתה עוזר מומחה לאמנות הציור, בעיקר ציור בצבעי שמן. אתה מתמחה ב:
 - טונאליות: ערכי אפל-בהיר, סולם טון, "טון לפני גוון"
 - תורת הצבע: גוון, גלגל הצבעים, טמפרטורת צבע (חמם/קר), צבעים משלימים
@@ -1254,7 +1256,7 @@ async function aiAnalyzeImage() {
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`,
       {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
@@ -1311,7 +1313,7 @@ async function callGemini(messages, system) {
       contents: messages.map(m => ({ role: m.role, parts: [{ text: m.text }] }))
     };
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`,
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
     );
     const data = await res.json();
