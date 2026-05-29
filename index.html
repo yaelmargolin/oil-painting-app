@@ -104,7 +104,7 @@ body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-seri
 /* ── AI Chat Panel ── */
 #ai-btn{position:fixed;bottom:24px;left:24px;width:56px;height:56px;background:linear-gradient(135deg,var(--acc2),var(--acc));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 4px 20px #0007;z-index:1000;transition:transform .2s,box-shadow .2s;border:none}
 #ai-btn:hover{transform:scale(1.1);box-shadow:0 6px 24px #0009}
-#ai-panel{position:fixed;bottom:92px;left:24px;width:370px;max-height:580px;background:var(--sur);border:1px solid var(--bd);border-radius:18px;box-shadow:0 10px 40px #000a;z-index:1000;display:none;flex-direction:column;overflow:hidden}
+#ai-panel{position:fixed;bottom:92px;left:24px;width:370px;max-height:90vh;background:var(--sur);border:1px solid var(--bd);border-radius:18px;box-shadow:0 10px 40px #000a;z-index:1000;display:none;flex-direction:column;overflow:hidden}
 #ai-panel.open{display:flex}
 .ai-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;border-bottom:1px solid var(--bd);background:var(--ch)}
 .ai-hdr-title{font-weight:800;color:var(--acc);font-size:15px}
@@ -141,7 +141,7 @@ body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-seri
 .ai-result{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;font-size:12.5px;color:var(--tx);line-height:1.75;white-space:pre-wrap}
 .ai-no-key{background:rgba(196,146,42,.12);border:1px solid var(--acc);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--acc);text-align:center}
 /* image analysis tab */
-#ai-image-tab{display:flex;flex-direction:column;gap:12px;padding:14px;overflow-y:auto;max-height:480px}
+#ai-image-tab{display:flex;flex-direction:column;gap:12px;padding:14px;overflow-y:auto;max-height:calc(90vh - 120px)}
 .ai-img-upload-area{border:2px dashed var(--bd);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--ch)}
 .ai-img-upload-area:hover{border-color:var(--acc);background:var(--sur)}
 .ai-img-upload-area.has-img{border-style:solid;border-color:var(--acc)}
@@ -1273,6 +1273,7 @@ async function aiAnalyzeImage() {
     const data = await res.json();
     if (data.error) { result.textContent = 'שגיאה: ' + data.error.message; }
     else { result.textContent = data.candidates?.[0]?.content?.parts?.[0]?.text || 'לא התקבלה תשובה.'; }
+    result.scrollIntoView({behavior:'smooth', block:'nearest'});
   } catch(err) {
     result.textContent = 'שגיאת חיבור — בדקי אינטרנט ומפתח.';
   }
