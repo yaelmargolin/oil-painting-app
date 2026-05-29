@@ -176,6 +176,59 @@ body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-seri
 .md-content blockquote{border-right:5px solid var(--acc);padding:12px 20px;background:var(--ch);border-radius:0 10px 10px 0;margin:14px 0;color:var(--tx2);font-style:italic;font-size:18px}
 .ai-msg.bot .md-content,.ai-result .md-content{font-size:19px}
 @media(max-width:700px){.ai-image-wrap{grid-template-columns:1fr}.ai-image-left{border-left:none;border-bottom:1px solid var(--bd)}.ai-image-right{padding:18px}.ai-messages{padding:16px}.ai-input-row{padding:12px 16px}.ai-article-wrap{padding:18px}.ai-key-row{padding:12px 16px}.ai-page-hdr{padding:16px}}
+/* ── Painters ── */
+.hcard.painters-card{border:2px solid #5a8a3a;background:linear-gradient(135deg,#f0f8ec,#e4f2da)}
+.hcard.painters-card .hcard-title{color:#3a6a1a}
+.dm .hcard.painters-card{background:linear-gradient(135deg,#182414,#1e3018);border-color:#6aaa4a}
+.dm .hcard.painters-card .hcard-title{color:#8adc5a}
+.painters-page{padding:28px 0}
+.painters-add-form{background:var(--card);border:1.5px solid var(--bd);border-radius:14px;padding:26px 28px;margin-bottom:32px}
+.painters-add-form h3{font-size:21px;font-weight:800;color:var(--acc);margin-bottom:20px}
+.pform-row{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.pform-label{font-size:16px;font-weight:600;color:var(--tx2)}
+.pform-input{background:var(--bg);border:1.5px solid var(--bd);color:var(--tx);border-radius:10px;padding:12px 16px;font-size:17px;font-family:inherit;width:100%;transition:border-color .2s}
+.pform-input:focus{outline:none;border-color:var(--acc)}
+textarea.pform-input{resize:vertical;min-height:90px;line-height:1.6}
+.pform-btn{background:linear-gradient(135deg,#5a8a3a,#3a6a1a);color:#fff;border:none;border-radius:10px;padding:13px 32px;font-size:18px;font-weight:700;cursor:pointer;transition:opacity .2s;margin-top:4px}
+.pform-btn:hover{opacity:.88}
+.painters-list-hdr{font-size:20px;font-weight:800;color:var(--tx);margin-bottom:16px}
+.painters-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+.painter-card{background:var(--card);border:1.5px solid var(--bd);border-radius:14px;padding:22px 24px;display:flex;flex-direction:column;gap:12px;transition:box-shadow .2s,transform .2s}
+.painter-card:hover{box-shadow:0 6px 20px #0003;transform:translateY(-2px)}
+.painter-name{font-size:20px;font-weight:800;color:var(--acc)}
+.painter-desc{font-size:17px;color:var(--tx2);line-height:1.7;flex:1}
+.painter-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.painter-link-btn{background:linear-gradient(135deg,#3a6a1a,#5a8a3a);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:16px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;transition:opacity .2s}
+.painter-link-btn:hover{opacity:.85}
+.painter-del-btn{background:none;border:1.5px solid var(--bd);color:var(--tx2);border-radius:8px;padding:9px 14px;font-size:15px;cursor:pointer;transition:all .2s;margin-right:auto}
+.painter-del-btn:hover{border-color:#c03820;color:#c03820}
+.painters-empty{text-align:center;padding:50px 20px;color:var(--tx2);font-size:18px;opacity:.7}
+@media(max-width:600px){.painters-grid{grid-template-columns:1fr}}
+/* ── Saved Analyses ── */
+.saved-wrap{padding:28px 32px;max-width:1100px}
+.saved-hdr{font-size:22px;font-weight:800;color:var(--acc);margin-bottom:22px}
+.saved-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
+.saved-card{background:var(--card);border:1.5px solid var(--bd);border-radius:14px;overflow:hidden;cursor:pointer;transition:box-shadow .2s,transform .2s}
+.saved-card:hover{box-shadow:0 8px 24px #0004;transform:translateY(-3px)}
+.saved-thumb{width:100%;height:160px;object-fit:cover;display:block;background:var(--sur)}
+.saved-thumb-ph{width:100%;height:160px;background:var(--sur);display:flex;align-items:center;justify-content:center;font-size:40px}
+.saved-card-body{padding:14px 16px}
+.saved-card-date{font-size:14px;color:var(--tx2);margin-bottom:6px}
+.saved-card-preview{font-size:15px;color:var(--tx);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.saved-card-del{display:block;width:100%;background:none;border:none;border-top:1px solid var(--bd);color:var(--tx2);padding:10px;font-size:14px;cursor:pointer;transition:color .2s;text-align:center}
+.saved-card-del:hover{color:#c03820}
+.saved-empty{text-align:center;padding:60px 20px;color:var(--tx2);font-size:18px;opacity:.7}
+/* Saved analysis detail modal */
+.saved-modal-bg{position:fixed;inset:0;background:#0008;z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
+.saved-modal{background:var(--bg);border-radius:16px;max-width:860px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px #000c}
+.saved-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--bd);position:sticky;top:0;background:var(--bg);z-index:1}
+.saved-modal-title{font-size:20px;font-weight:800;color:var(--acc)}
+.saved-modal-close{background:none;border:1.5px solid var(--bd);color:var(--tx2);border-radius:8px;padding:7px 14px;font-size:16px;cursor:pointer}
+.saved-modal-close:hover{border-color:var(--acc);color:var(--acc)}
+.saved-modal-body{display:flex;gap:24px;padding:24px;flex-wrap:wrap}
+.saved-modal-img{width:260px;border-radius:10px;object-fit:contain;flex-shrink:0;align-self:flex-start;border:1px solid var(--bd)}
+.saved-modal-text{flex:1;min-width:260px}
+@media(max-width:600px){.saved-wrap{padding:16px}.saved-modal-body{flex-direction:column}.saved-modal-img{width:100%}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 </head>
@@ -993,10 +1046,11 @@ function render() {
     <div class="hdr-btns"><button class="ico-btn" onclick="toggleTheme()">☀️ / 🌙</button></div>
   </div>` : '';
 
-  if (view === 'home')        html += renderHome();
-  else if (view === 'list')   html += renderList();
-  else if (view === 'detail') html += renderDetail();
-  else if (view === 'ai')     html += renderAI();
+  if (view === 'home')           html += renderHome();
+  else if (view === 'list')      html += renderList();
+  else if (view === 'detail')    html += renderDetail();
+  else if (view === 'ai')        html += renderAI();
+  else if (view === 'painters')  html += renderPainters();
 
   app.innerHTML = html;
   if (view === 'ai') afterRenderAI();
@@ -1029,6 +1083,11 @@ function renderHome() {
       <div class="hcard-icon">🤖</div>
       <div class="hcard-title">עוזר AI לציור</div>
       <div class="hcard-desc">שאלות על טכניקות ציור, ניתוח מאמרים, וניתוח ציורים מפורט עם Gemini AI — תשובות גדולות וקריאות.</div>
+    </div>
+    <div class="hcard painters-card" onclick="setView('painters',null,null)">
+      <div class="hcard-icon">🖌</div>
+      <div class="hcard-title">ציירים מועדפים</div>
+      <div class="hcard-desc">רשימת ציירים שאני אוהבת — שם, קישור לאתר, ותיאור קצר. הוסיפי ציירים חדשים בקלות.</div>
     </div>
   </div>`;
 }
@@ -1118,6 +1177,167 @@ function renderDetail() {
   return body;
 }
 
+/* ── Painters ── */
+function paintersLoad() {
+  try { return JSON.parse(localStorage.getItem('painters') || '[]'); } catch(e) { return []; }
+}
+function paintersSave(list) {
+  localStorage.setItem('painters', JSON.stringify(list));
+}
+
+function renderPainters() {
+  const list = paintersLoad();
+  const cards = list.length === 0
+    ? `<div class="painters-empty">עדיין אין ציירים ברשימה — הוסיפי את הראשון בטופס למעלה 🖌</div>`
+    : `<div class="painters-grid">${list.map(p => `
+        <div class="painter-card">
+          <div class="painter-name">${esc(p.name)}</div>
+          ${p.desc ? `<div class="painter-desc">${esc(p.desc)}</div>` : ''}
+          <div class="painter-actions">
+            ${p.url ? `<a class="painter-link-btn" href="${esc(p.url)}" target="_blank" rel="noopener">🌐 לאתר</a>` : ''}
+            <button class="painter-del-btn" onclick="painterDelete('${p.id}')">🗑 מחק</button>
+          </div>
+        </div>`).join('')}
+      </div>`;
+  return `
+  <div class="painters-page">
+    <div class="sec-hdr">
+      <button class="back-btn" onclick="setView('home',null,null)">◀ דף הבית</button>
+      <span class="sec-title">🖌 ציירים מועדפים</span>
+    </div>
+    <div class="painters-add-form">
+      <h3>➕ הוסיפי צייר חדש</h3>
+      <div class="pform-row">
+        <label class="pform-label" for="p-name">שם הצייר / הצייירת *</label>
+        <input class="pform-input" id="p-name" type="text" placeholder="למשל: ג'ון סינגר סארג'נט"/>
+      </div>
+      <div class="pform-row">
+        <label class="pform-label" for="p-url">קישור לאתר (אופציונלי)</label>
+        <input class="pform-input" id="p-url" type="url" placeholder="https://..."/>
+      </div>
+      <div class="pform-row">
+        <label class="pform-label" for="p-desc">תיאור קצר (אופציונלי)</label>
+        <textarea class="pform-input" id="p-desc" placeholder="מה מיוחד בציירת הזו? סגנון, טכניקה, תקופה..."></textarea>
+      </div>
+      <button class="pform-btn" onclick="painterAdd()">➕ הוסיפי לרשימה</button>
+    </div>
+    <div class="painters-list-hdr">הרשימה שלי (${list.length})</div>
+    ${cards}
+  </div>`;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function painterAdd() {
+  const name = document.getElementById('p-name').value.trim();
+  if (!name) { document.getElementById('p-name').focus(); return; }
+  const url  = document.getElementById('p-url').value.trim();
+  const desc = document.getElementById('p-desc').value.trim();
+  const list = paintersLoad();
+  list.unshift({ id: Date.now().toString(), name, url, desc });
+  paintersSave(list);
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function painterDelete(id) {
+  if (!confirm('למחוק את הצייר הזה מהרשימה?')) return;
+  const list = paintersLoad().filter(p => p.id !== id);
+  paintersSave(list);
+  render();
+}
+
+/* ── Saved Analyses ── */
+const SAVED_MAX = 20;
+
+function savedLoad() {
+  try { return JSON.parse(localStorage.getItem('saved_analyses') || '[]'); } catch(e) { return []; }
+}
+function savedStore(list) {
+  localStorage.setItem('saved_analyses', JSON.stringify(list));
+}
+
+function savedShrinkImage(dataUrl, maxPx) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale);
+      c.height = Math.round(img.height * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      resolve(c.toDataURL('image/jpeg', 0.7));
+    };
+    img.onerror = () => resolve(null);
+    img.src = dataUrl;
+  });
+}
+
+async function savedAddAnalysis(responseText) {
+  const thumb = aiImageDataUrl ? await savedShrinkImage(aiImageDataUrl, 400) : null;
+  const fullImg = aiImageDataUrl ? await savedShrinkImage(aiImageDataUrl, 1200) : null;
+  const list = savedLoad();
+  const entry = {
+    id: Date.now().toString(),
+    date: new Date().toLocaleDateString('he-IL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
+    thumb,
+    fullImg,
+    text: responseText
+  };
+  list.unshift(entry);
+  if (list.length > SAVED_MAX) list.length = SAVED_MAX;
+  savedStore(list);
+}
+
+function renderSavedAnalyses() {
+  const list = savedLoad();
+  if (list.length === 0) {
+    return `<div class="saved-wrap"><div class="saved-empty">עדיין לא נשמרו ניתוחים.<br>נתחי ציור בטאב "ניתוח ציור" — הניתוח יישמר אוטומטית כאן.</div></div>`;
+  }
+  const cards = list.map(e => `
+    <div class="saved-card" onclick="savedOpen('${e.id}')">
+      ${e.thumb ? `<img class="saved-thumb" src="${e.thumb}" alt="ציור"/>` : `<div class="saved-thumb-ph">🖼</div>`}
+      <div class="saved-card-body">
+        <div class="saved-card-date">${esc(e.date)}</div>
+        <div class="saved-card-preview">${e.text.replace(/<[^>]+>/g,'').slice(0,120)}...</div>
+      </div>
+      <button class="saved-card-del" onclick="event.stopPropagation();savedDelete('${e.id}')">🗑 מחק</button>
+    </div>`).join('');
+  return `<div class="saved-wrap">
+    <div class="saved-hdr">📚 ניתוחים שמורים (${list.length} / ${SAVED_MAX})</div>
+    <div class="saved-grid">${cards}</div>
+  </div>`;
+}
+
+function savedOpen(id) {
+  const entry = savedLoad().find(e => e.id === id);
+  if (!entry) return;
+  const bg = document.createElement('div');
+  bg.className = 'saved-modal-bg';
+  bg.onclick = e => { if (e.target === bg) bg.remove(); };
+  bg.innerHTML = `
+    <div class="saved-modal">
+      <div class="saved-modal-hdr">
+        <div class="saved-modal-title">📊 ניתוח — ${esc(entry.date)}</div>
+        <button class="saved-modal-close" onclick="this.closest('.saved-modal-bg').remove()">✕ סגור</button>
+      </div>
+      <div class="saved-modal-body">
+        ${entry.fullImg ? `<img class="saved-modal-img" src="${entry.fullImg}" alt="ציור"/>` : ''}
+        <div class="saved-modal-text md-content">${mdParse(entry.text)}</div>
+      </div>
+    </div>`;
+  document.body.appendChild(bg);
+}
+
+function savedDelete(id) {
+  if (!confirm('למחוק את הניתוח הזה?')) return;
+  savedStore(savedLoad().filter(e => e.id !== id));
+  const el = document.getElementById('ai-saved-view');
+  if (el) el.innerHTML = renderSavedAnalyses();
+}
+
 function mdParse(text) {
   return typeof marked !== 'undefined' ? marked.parse(text) : text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
 }
@@ -1149,6 +1369,7 @@ function renderAI() {
       <button class="ai-tab active" id="ai-tab-chat" onclick="switchAITab('chat')">💬 שאלות</button>
       <button class="ai-tab" id="ai-tab-article" onclick="switchAITab('article')">📄 ניתוח מאמר</button>
       <button class="ai-tab" id="ai-tab-image" onclick="switchAITab('image')">🖼 ניתוח ציור</button>
+      <button class="ai-tab" id="ai-tab-saved" onclick="switchAITab('saved')">📚 ניתוחים שמורים</button>
     </div>
     <div id="ai-chat-view">
       <div class="ai-chat-wrap">
@@ -1202,6 +1423,9 @@ function renderAI() {
         </div>
       </div>
     </div>
+    <div id="ai-saved-view" style="display:none">
+      ${renderSavedAnalyses()}
+    </div>
   </div>`;
 }
 
@@ -1241,10 +1465,15 @@ let aiHistory = [];
 let aiImageBase64 = null, aiImageMime = 'image/jpeg', aiImageDataUrl = null;
 
 function switchAITab(tab) {
-  document.getElementById('ai-chat-view').style.display = tab === 'chat' ? 'block' : 'none';
+  document.getElementById('ai-chat-view').style.display    = tab === 'chat'    ? 'block' : 'none';
   document.getElementById('ai-article-view').style.display = tab === 'article' ? 'block' : 'none';
-  document.getElementById('ai-image-view').style.display = tab === 'image' ? 'block' : 'none';
-  ['chat','article','image'].forEach(t => document.getElementById('ai-tab-'+t).classList.toggle('active', t === tab));
+  document.getElementById('ai-image-view').style.display   = tab === 'image'   ? 'block' : 'none';
+  document.getElementById('ai-saved-view').style.display   = tab === 'saved'   ? 'block' : 'none';
+  ['chat','article','image','saved'].forEach(t => document.getElementById('ai-tab-'+t).classList.toggle('active', t === tab));
+  if (tab === 'saved') {
+    const el = document.getElementById('ai-saved-view');
+    if (el) el.innerHTML = renderSavedAnalyses();
+  }
 }
 
 function saveAIKey() {
@@ -1399,6 +1628,9 @@ async function aiAnalyzeImage() {
     } else {
       const t = data.candidates?.[0]?.content?.parts?.[0]?.text || 'לא התקבלה תשובה.';
       result.innerHTML = '<div class="md-content">' + mdParse(t) + '</div>';
+      await savedAddAnalysis(t);
+      const savedTab = document.getElementById('ai-tab-saved');
+      if (savedTab) { savedTab.style.fontWeight = '800'; savedTab.textContent = `📚 ניתוחים שמורים (${savedLoad().length})`; }
     }
   } catch(err) {
     result.innerHTML = '<div class="ai-response-error">שגיאת חיבור — בדקי אינטרנט ומפתח.</div>';
