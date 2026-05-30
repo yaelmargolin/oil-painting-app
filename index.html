@@ -171,6 +171,34 @@ body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-seri
 .ai-response-placeholder{color:var(--tx2);text-align:center;padding:80px 20px;font-size:18px;opacity:.7}
 .ai-response-loading{color:var(--tx2);text-align:center;padding:80px 20px;font-size:18px;font-style:italic}
 .ai-response-error{color:#c03820;background:rgba(192,56,32,.08);border:1px solid rgba(192,56,32,.3);border-radius:10px;padding:18px;font-size:17px}
+.img-followup{margin-top:1.5rem;border-top:2px solid var(--bd);padding-top:1.4rem}
+.img-followup-title{font-size:18px;font-weight:700;color:var(--tx2);margin-bottom:0.9rem}
+.img-followup-msgs{display:flex;flex-direction:column;gap:0.7rem;max-height:340px;overflow-y:auto;margin-bottom:1rem}
+.img-followup-msg{padding:12px 16px;border-radius:12px;font-size:18px;line-height:1.75;word-break:break-word}
+.img-followup-msg.user{background:var(--acc);color:#111;align-self:flex-end;max-width:80%;border-radius:14px 14px 4px 14px;font-weight:500}
+.img-followup-msg.bot{background:var(--card);border:1.5px solid var(--bd);align-self:flex-start;max-width:95%;border-radius:14px 14px 14px 4px}
+.img-followup-msg.thinking{color:var(--tx2);font-style:italic}
+.img-followup-row{display:flex;gap:0.6rem;align-items:flex-end;margin-top:0.4rem}
+.img-followup-input{flex:1;padding:12px 16px;border-radius:10px;border:1.5px solid var(--bd);background:var(--ch);color:var(--tx);font-size:18px;resize:none;font-family:inherit;line-height:1.5}
+.img-followup-input:focus{outline:none;border-color:var(--acc)}
+.img-followup-btn{padding:12px 22px;background:var(--acc);color:#fff;border:none;border-radius:10px;font-size:18px;font-weight:700;cursor:pointer;white-space:nowrap}
+.img-followup-btn:hover:not(:disabled){opacity:.85}
+.img-followup-btn:disabled{opacity:.45;cursor:default}
+.fb-row{display:flex;align-items:center;gap:10px;padding:8px 32px;background:var(--sur);border-bottom:1px solid var(--bd);font-size:15px;color:var(--tx2);flex-wrap:wrap}
+.fb-dot{width:9px;height:9px;border-radius:50%;background:#bbb;flex-shrink:0;display:inline-block;transition:background .3s}
+.fb-dot.ok{background:#3c9c3c}
+.fb-setup-link{background:none;border:1px solid var(--bd);color:var(--acc);border-radius:6px;padding:4px 12px;font-size:14px;cursor:pointer;font-weight:600;margin-right:auto}
+.fb-setup-link:hover{background:var(--acc);color:#111}
+.fb-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px}
+.fb-modal{background:var(--card);border-radius:16px;padding:30px 32px;max-width:520px;width:100%;box-shadow:0 24px 64px #0009;direction:rtl}
+.fb-modal h3{font-size:20px;font-weight:800;color:var(--acc);margin-bottom:1rem}
+.fb-steps{font-size:15px;color:var(--tx);line-height:2.2;margin-bottom:1.2rem;background:var(--sur);border-radius:8px;padding:14px 16px}
+.fb-steps a{color:var(--acc);font-weight:600}
+.fb-modal-ta{width:100%;height:120px;background:var(--ch);border:1.5px solid var(--bd);border-radius:8px;padding:11px 13px;font-size:13px;font-family:monospace;color:var(--tx);resize:none;margin-top:4px}
+.fb-modal-ta:focus{outline:none;border-color:var(--acc)}
+.fb-modal-row{display:flex;gap:10px;margin-top:12px}
+.fb-modal-save{background:var(--acc);color:#111;border:none;border-radius:8px;padding:10px 22px;font-size:16px;font-weight:700;cursor:pointer}
+.fb-modal-cancel{background:none;border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:10px 18px;font-size:16px;cursor:pointer}
 .md-content{font-size:19px;line-height:1.9;color:var(--tx);direction:rtl}
 .md-content h1,.md-content h2{color:var(--acc);border-bottom:2px solid var(--bd);padding-bottom:10px;margin:28px 0 16px;font-size:23px}
 .md-content h3{color:var(--acc2);font-size:21px;margin:22px 0 10px}
@@ -240,6 +268,8 @@ textarea.pform-input{resize:vertical;min-height:90px;line-height:1.6}
 @media(max-width:600px){.saved-wrap{padding:16px}.saved-modal-body{flex-direction:column}.saved-modal-img{width:100%}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <div id="app"></div>
@@ -1293,6 +1323,109 @@ function painterDelete(id) {
   render();
 }
 
+/* ── Firebase Firestore sync ── */
+// Keeps saved analyses in sync across all devices automatically.
+// Falls back to localStorage-only when Firebase is not configured.
+
+let fbDB = null;
+let fbUnsubscribe = null;
+
+function fbConfigGet() {
+  try { return JSON.parse(localStorage.getItem('fb_config') || 'null'); }
+  catch(e) { return null; }
+}
+
+function fbInit() {
+  const cfg = fbConfigGet();
+  if (!cfg || !cfg.projectId) return;
+  try {
+    if (typeof firebase === 'undefined') return;
+    if (firebase.apps.length === 0) firebase.initializeApp(cfg);
+    fbDB = firebase.firestore();
+    if (fbUnsubscribe) fbUnsubscribe();
+    // Real-time listener: any change in Firestore updates localStorage + UI
+    fbUnsubscribe = fbDB.collection('analyses').limit(SAVED_MAX)
+      .onSnapshot(snap => {
+        // Sort newest-first by id (which is Date.now() string)
+        const list = snap.docs
+          .map(d => { const v = d.data(); return { id:d.id, date:v.date, thumb:v.thumb||null, fullImg:v.fullImg||null, text:v.text }; })
+          .sort((a, b) => Number(b.id) - Number(a.id));
+        savedStore(list);
+        // Refresh the saved tab if it is currently visible
+        const el = document.getElementById('ai-saved-view');
+        if (el && el.style.display !== 'none') el.innerHTML = renderSavedAnalyses();
+        const tab = document.getElementById('ai-tab-saved');
+        if (tab) tab.textContent = `📚 ניתוחים שמורים (${list.length})`;
+      }, err => console.error('[Firebase]', err.message));
+  } catch(e) { console.error('[Firebase init]', e.message); }
+}
+
+async function fbSave(entry) {
+  if (!fbDB) return;
+  try {
+    await fbDB.collection('analyses').doc(entry.id).set({
+      date: entry.date, thumb: entry.thumb || null,
+      fullImg: entry.fullImg || null, text: entry.text,
+      ts: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) { console.error('[Firebase save]', e.message); }
+}
+
+async function fbDeleteDoc(id) {
+  if (!fbDB) return;
+  try { await fbDB.collection('analyses').doc(id).delete(); }
+  catch(e) { console.error('[Firebase delete]', e.message); }
+}
+
+function fbOpenSetup() {
+  const cfg = fbConfigGet();
+  const existing = cfg ? JSON.stringify(cfg, null, 2) : '';
+  const bg = document.createElement('div');
+  bg.className = 'fb-modal-bg';
+  bg.innerHTML = `<div class="fb-modal">
+    <h3>☁️ חיבור Firebase — סנכרון בין מכשירים</h3>
+    <div class="fb-steps">
+      1. כנסי ל-<a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a><br>
+      2. צרי פרוייקט חדש ← Add app ← &lt;/&gt; Web<br>
+      3. העתיקי את אובייקט <b>firebaseConfig</b><br>
+      4. פתחי <b>Firestore Database</b> ← Create database ← <b>Start in test mode</b><br>
+      5. הדביקי את ה-JSON למטה ולחצי "חברי"
+    </div>
+    <label style="font-size:14px;color:var(--tx2)">Firebase config JSON:</label>
+    <textarea class="fb-modal-ta" id="fb-cfg-ta" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...",...}'>${existing}</textarea>
+    <div class="fb-modal-row">
+      <button class="fb-modal-save" id="fb-modal-save-btn" onclick="fbSaveConfig()">☁️ חברי</button>
+      <button class="fb-modal-cancel" onclick="this.closest('.fb-modal-bg').remove()">ביטול</button>
+    </div>
+  </div>`;
+  bg.onclick = e => { if (e.target === bg) bg.remove(); };
+  document.body.appendChild(bg);
+}
+
+async function fbSaveConfig() {
+  const raw = document.getElementById('fb-cfg-ta').value.trim();
+  const btn = document.getElementById('fb-modal-save-btn');
+  try {
+    const cfg = JSON.parse(raw);
+    if (!cfg.projectId) throw new Error('חסר projectId');
+    localStorage.setItem('fb_config', JSON.stringify(cfg));
+    // Migrate existing local analyses to Firestore before reloading
+    btn.textContent = '⏳ מעלה נתונים...'; btn.disabled = true;
+    if (firebase.apps.length === 0) firebase.initializeApp(cfg);
+    const db = firebase.firestore();
+    const local = savedLoad();
+    for (const entry of local) {
+      await db.collection('analyses').doc(entry.id).set({
+        date: entry.date, thumb: entry.thumb||null,
+        fullImg: entry.fullImg||null, text: entry.text,
+        ts: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    document.querySelector('.fb-modal-bg')?.remove();
+    location.reload();
+  } catch(e) { alert('שגיאה: ' + e.message); if(btn){btn.textContent='☁️ חברי';btn.disabled=false;} }
+}
+
 /* ── Saved Analyses ── */
 const SAVED_MAX = 20;
 
@@ -1333,6 +1466,7 @@ async function savedAddAnalysis(responseText) {
   list.unshift(entry);
   if (list.length > SAVED_MAX) list.length = SAVED_MAX;
   savedStore(list);
+  await fbSave(entry); // sync to Firestore (no-op if Firebase not configured)
 }
 
 function renderSavedAnalyses() {
@@ -1378,6 +1512,7 @@ function savedOpen(id) {
 function savedDelete(id) {
   if (!confirm('למחוק את הניתוח הזה?')) return;
   savedStore(savedLoad().filter(e => e.id !== id));
+  fbDeleteDoc(id); // sync deletion to Firestore (no-op if Firebase not configured)
   const el = document.getElementById('ai-saved-view');
   if (el) el.innerHTML = renderSavedAnalyses();
 }
@@ -1388,6 +1523,7 @@ function mdParse(text) {
 
 function renderAI() {
   const savedKey = localStorage.getItem('gemini_key') || '';
+  const fbConnected = !!fbDB;
   const chatMsgs = aiHistory.map(m => m.role === 'user'
     ? `<div class="ai-msg user">${m.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`
     : `<div class="ai-msg bot"><div class="md-content">${mdParse(m.text)}</div></div>`
@@ -1408,6 +1544,13 @@ function renderAI() {
       <span class="ai-key-label">🔑 מפתח Gemini API:</span>
       <input class="ai-key-input" id="ai-key" type="password" placeholder="הדביקי מפתח Gemini..." value="${savedKey}"/>
       <button class="ai-key-btn" onclick="saveAIKey()">שמור</button>
+    </div>
+    <div class="fb-row">
+      <span class="fb-dot ${fbConnected ? 'ok' : ''}" id="fb-dot"></span>
+      <span id="fb-status-text">${fbConnected
+        ? '☁️ Firebase מחובר — ניתוחים מסונכרנים אוטומטית בין כל המכשירים'
+        : '⚫ ניתוחים נשמרים רק במכשיר זה — הגדרי Firebase לסנכרון אוטומטי'}</span>
+      <button class="fb-setup-link" onclick="fbOpenSetup()">${fbConnected ? '⚙ שנה הגדרות' : '☁️ חברי Firebase'}</button>
     </div>
     <div class="ai-tabs">
       <button class="ai-tab active" id="ai-tab-chat" onclick="switchAITab('chat')">💬 שאלות</button>
@@ -1464,6 +1607,16 @@ function renderAI() {
           <div class="ai-response-area" id="ai-img-result">
             <div class="ai-response-placeholder">העלי ציור משמאל ולחצי על "נתחי" לקבלת ניתוח מפורט</div>
           </div>
+          <div id="ai-img-followup" style="display:none" class="img-followup">
+            <div class="img-followup-title">💬 המשיכי את השיחה על הציור</div>
+            <div class="img-followup-msgs" id="img-followup-msgs"></div>
+            <div class="img-followup-row">
+              <textarea class="img-followup-input" id="img-followup-input"
+                placeholder="שאלי שאלה נוספת על הציור..." rows="2"
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();imgFollowupSend();}"></textarea>
+              <button class="img-followup-btn" id="img-followup-btn" onclick="imgFollowupSend()">שלחי ↵</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1507,6 +1660,7 @@ const AI_SYSTEM = `אתה עוזר מומחה לאמנות הציור, בעיק�
 
 let aiHistory = [];
 let aiImageBase64 = null, aiImageMime = 'image/jpeg', aiImageDataUrl = null;
+let imgChatHistory = []; // conversation history for follow-up chat about the current painting
 
 function switchAITab(tab) {
   document.getElementById('ai-chat-view').style.display    = tab === 'chat'    ? 'block' : 'none';
@@ -1565,18 +1719,150 @@ async function callGemini(messages, system) {
   } catch(e) { return 'שגיאת חיבור — בדקי אינטרנט ומפתח.'; }
 }
 
+// ── Instagram URL helpers ──────────────────────────────────────────────────
+//
+// Architecture: pure browser, no backend server.
+//
+// To turn an Instagram URL into actual video bytes we use the Cobalt public
+// API (https://cobalt.tools) — a free, open-source media resolver.
+// Cobalt returns a "tunnel" URL that proxies the video through cobalt.tools
+// servers with CORS headers, so we can fetch it directly from the browser.
+//
+// Flow:
+//   1. detectInstagramUrls  — find every instagram.com/reel|p|tv URL in text
+//   2. resolveInstagramVideo — ask Cobalt → download bytes → base64
+//   3. callGeminiMultimodal  — send text + inline_data video part to Gemini
+//
+// Gemini receives the ACTUAL video bytes (inline_data), not a URL string.
+
+function detectInstagramUrls(text) {
+  // Matches instagram.com/reel/*, /p/*, /tv/* with optional ?query
+  const re = /https?:\/\/(www\.)?instagram\.com\/(reel|p|tv)\/[\w-]+\/?(?:\?[^\s]*)?/gi;
+  return [...text.matchAll(re)].map(m => m[0]);
+}
+
+async function resolveInstagramVideo(instagramUrl) {
+  // ── Step 1: Resolve with Cobalt ─────────────────────────────────────────
+  // POST the Instagram URL to the Cobalt API.
+  // Cobalt returns a downloadable video URL (usually a tunnel through its
+  // own servers, which has Access-Control-Allow-Origin: * so we can fetch it).
+  let videoUrl;
+  try {
+    const cobaltRes = await fetch('https://api.cobalt.tools/', {
+      method: 'POST',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: instagramUrl })
+    });
+    if (!cobaltRes.ok) {
+      return { error: `שירות ההורדה החזיר שגיאה (${cobaltRes.status}).` };
+    }
+    const cobalt = await cobaltRes.json();
+    if (cobalt.status === 'error' || !cobalt.url) {
+      // Common causes: private post, age-gated, geo-blocked, removed
+      return { error: 'לא הצלחתי לגשת לסרטון — ייתכן שהוא פרטי, הוסר, או חסום.' };
+    }
+    videoUrl = cobalt.url;
+  } catch (e) {
+    return { error: 'שירות ההורדה (Cobalt) לא זמין כרגע. נסי שוב מאוחר יותר.' };
+  }
+
+  // ── Step 2: Download the video bytes ────────────────────────────────────
+  // Cobalt tunnel URLs go through cobalt.tools and include CORS headers,
+  // so this fetch works directly from the browser without any proxy.
+  let videoBlob;
+  try {
+    const videoRes = await fetch(videoUrl);
+    if (!videoRes.ok) throw new Error(`HTTP ${videoRes.status}`);
+    videoBlob = await videoRes.blob();
+  } catch (e) {
+    return {
+      error: 'לא הצלחתי להוריד את הסרטון. ' +
+             'אם הוא ציבורי — נסי שוב; אחרת הורידי אותו ידנית והעלי בלשונית "ניתוח ציור".'
+    };
+  }
+
+  // ── Step 3: Check file size ──────────────────────────────────────────────
+  // Gemini's inline_data limit is ~20MB. Most short Reels are well under it.
+  const MAX_BYTES = 20 * 1024 * 1024;
+  if (videoBlob.size > MAX_BYTES) {
+    const mb = (videoBlob.size / 1024 / 1024).toFixed(1);
+    return { error: `הסרטון גדול מדי (${mb}MB). Gemini מקבל עד 20MB — נסי קליפ קצר יותר.` };
+  }
+
+  // ── Step 4: Convert to base64 ────────────────────────────────────────────
+  // Gemini's inline_data field expects base64-encoded bytes — NOT a URL.
+  // This is what lets Gemini actually *see* the video content.
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve({
+      mimeType: videoBlob.type || 'video/mp4',
+      data: reader.result.split(',')[1]   // strip "data:video/mp4;base64," prefix
+    });
+    reader.onerror = () => resolve({ error: 'שגיאה בעיבוד הסרטון.' });
+    reader.readAsDataURL(videoBlob);
+  });
+}
+
+async function callGeminiMultimodal(cleanedText, mediaItems, historyArr) {
+  const key = localStorage.getItem('gemini_key');
+  if (!key) return 'נא להזין מפתח API תחילה.';
+  try {
+    const mediaParts = mediaItems.map(m => ({
+      inline_data: { mime_type: m.mimeType, data: m.data }
+    }));
+    const contents = [
+      ...historyArr.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
+      { role: 'user', parts: [{ text: cleanedText }, ...mediaParts] }
+    ];
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system_instruction: { parts: [{ text: AI_SYSTEM }] }, contents }) }
+    );
+    const data = await res.json();
+    if (data.error) return `שגיאה: ${data.error.message}`;
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || 'לא התקבלה תשובה.';
+  } catch(e) { return 'שגיאת חיבור — בדקי אינטרנט ומפתח.'; }
+}
+
+// ── Chat send ──────────────────────────────────────────────────────────────
+
 async function sendAIChat() {
   const inp = document.getElementById('ai-input');
   const text = inp.value.trim();
   if (!text) return;
   inp.value = '';
+  const igUrls = detectInstagramUrls(text);
   aiAddUser(text);
   const btn = document.getElementById('ai-send-btn');
   btn.disabled = true;
   const thinking = aiAddBot('חושב...', true);
-  aiHistory.push({ role: 'user', text });
-  const reply = await callGemini(aiHistory);
-  aiHistory.push({ role: 'model', text: reply });
+
+  let reply;
+  if (igUrls.length > 0) {
+    thinking.textContent = `⏳ מוריד ${igUrls.length > 1 ? igUrls.length + ' סרטונים' : 'סרטון'} מאינסטגרם...`;
+    const mediaResults = await Promise.all(igUrls.map(u => resolveInstagramVideo(u)));
+    const firstError = mediaResults.find(m => m.error);
+    if (firstError) {
+      thinking.remove();
+      aiAddBot('❌ ' + firstError.error);
+      btn.disabled = false;
+      return;
+    }
+    let cleanedText = text;
+    igUrls.forEach((u, i) => {
+      cleanedText = cleanedText.replace(u, igUrls.length > 1 ? `(סרטון ${i + 1} מצורף)` : '(הסרטון מצורף)');
+    });
+    thinking.textContent = '⏳ מנתח סרטון...';
+    reply = await callGeminiMultimodal(cleanedText, mediaResults, aiHistory);
+    aiHistory.push({ role: 'user', text });
+    aiHistory.push({ role: 'model', text: reply });
+  } else {
+    aiHistory.push({ role: 'user', text });
+    reply = await callGemini(aiHistory);
+    aiHistory.push({ role: 'model', text: reply });
+  }
+
   thinking.remove();
   aiAddBot(reply);
   btn.disabled = false;
@@ -1605,6 +1891,68 @@ async function aiAnalyzeArticle() {
   btn.disabled = false;
 }
 
+async function imgFollowupSend() {
+  const inp = document.getElementById('img-followup-input');
+  const text = inp.value.trim();
+  if (!text || !aiImageBase64) return;
+  inp.value = '';
+
+  const msgs = document.getElementById('img-followup-msgs');
+
+  // User bubble
+  const userDiv = document.createElement('div');
+  userDiv.className = 'img-followup-msg user';
+  userDiv.textContent = text;
+  msgs.appendChild(userDiv);
+
+  // Thinking bubble (replaced with reply when ready)
+  const botDiv = document.createElement('div');
+  botDiv.className = 'img-followup-msg bot thinking';
+  botDiv.textContent = '⏳ חושב...';
+  msgs.appendChild(botDiv);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  const btn = document.getElementById('img-followup-btn');
+  btn.disabled = true;
+
+  const key = localStorage.getItem('gemini_key');
+  if (!key) {
+    botDiv.textContent = 'נא להזין מפתח API תחילה.';
+    btn.disabled = false;
+    return;
+  }
+
+  // Follow-up questions are plain text — Gemini remembers the painting
+  // from the first exchange (image + initial analysis) already in imgChatHistory.
+  imgChatHistory.push({ role: 'user', parts: [{ text }] });
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: AI_SYSTEM }] },
+          contents: imgChatHistory
+        })
+      }
+    );
+    const data = await res.json();
+    const reply = data.error
+      ? `שגיאה: ${data.error.message}`
+      : (data.candidates?.[0]?.content?.parts?.[0]?.text || 'לא התקבלה תשובה.');
+    imgChatHistory.push({ role: 'model', parts: [{ text: reply }] });
+    botDiv.className = 'img-followup-msg bot';
+    botDiv.innerHTML = '<div class="md-content">' + mdParse(reply) + '</div>';
+  } catch(e) {
+    botDiv.className = 'img-followup-msg bot';
+    botDiv.textContent = 'שגיאת חיבור — בדקי אינטרנט ומפתח.';
+    imgChatHistory.pop(); // remove the failed turn so history stays clean
+  }
+
+  msgs.scrollTop = msgs.scrollHeight;
+  btn.disabled = false;
+}
+
 function aiLoadImage(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -1616,6 +1964,11 @@ function aiLoadImage(e) {
     }
     return;
   }
+  // New image → clear previous follow-up conversation
+  imgChatHistory = [];
+  const fu = document.getElementById('ai-img-followup');
+  if (fu) { fu.style.display = 'none'; document.getElementById('img-followup-msgs').innerHTML = ''; }
+
   aiImageMime = file.type || 'image/jpeg';
   const reader = new FileReader();
   reader.onload = ev => {
@@ -1685,12 +2038,30 @@ async function aiAnalyzeImage() {
       await savedAddAnalysis(t);
       const savedTab = document.getElementById('ai-tab-saved');
       if (savedTab) { savedTab.style.fontWeight = '800'; savedTab.textContent = `📚 ניתוחים שמורים (${savedLoad().length})`; }
+      // Seed the follow-up history so Gemini knows about the image + the full
+      // analysis. Subsequent questions are text-only (the image stays in context).
+      imgChatHistory = [
+        { role: 'user', parts: [
+          { inline_data: { mime_type: aiImageMime, data: aiImageBase64 } },
+          { text: prompt }
+        ]},
+        { role: 'model', parts: [{ text: t }] }
+      ];
+      // Show the follow-up chat area and clear any old messages
+      const fu = document.getElementById('ai-img-followup');
+      if (fu) {
+        document.getElementById('img-followup-msgs').innerHTML = '';
+        fu.style.display = 'block';
+      }
     }
   } catch(err) {
     result.innerHTML = '<div class="ai-response-error">שגיאת חיבור — בדקי אינטרנט ומפתח.</div>';
   }
   btn.disabled = false; btn.textContent = '🔍 נתחי שוב';
 }
+
+// Initialize Firebase on page load (no-op if no config saved yet)
+fbInit();
 
 </script>
 </body>
