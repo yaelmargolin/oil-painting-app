@@ -1409,16 +1409,21 @@ async function fbSaveConfig() {
     const cfg = JSON.parse(raw);
     if (!cfg.projectId) throw new Error('חסר projectId');
     localStorage.setItem('fb_config', JSON.stringify(cfg));
-    // Migrate existing local analyses to Firestore before reloading
     btn.textContent = '⏳ מעלה נתונים...'; btn.disabled = true;
     if (firebase.apps.length === 0) firebase.initializeApp(cfg);
     const db = firebase.firestore();
     const local = savedLoad();
+    // Upload each entry individually — skip any that fail (too large, etc.)
+    // Each upload has a 5-second timeout so we never get stuck
     for (const entry of local) {
-      await db.collection('analyses').doc(entry.id).set({
+      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000));
+      const upload = db.collection('analyses').doc(entry.id).set({
         date: entry.date, thumb: entry.thumb||null,
         fullImg: entry.fullImg||null, text: entry.text,
         ts: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await Promise.race([upload, timeout]).catch(err => {
+        console.warn('[fb migrate] skipped entry', entry.id, err.message);
       });
     }
     document.querySelector('.fb-modal-bg')?.remove();
