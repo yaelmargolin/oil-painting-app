@@ -1608,6 +1608,14 @@ async function aiAnalyzeArticle() {
 function aiLoadImage(e) {
   const file = e.target.files[0];
   if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    const result = document.getElementById('ai-img-result');
+    if (result) {
+      result.innerHTML = '<div class="ai-response-error">❌ הקובץ שבחרת הוא <strong>' + esc(file.type || 'סרטון/קובץ לא מוכר') + '</strong> — Gemini יכול לנתח רק תמונות (JPG, PNG, WEBP). אנא העלי תמונת ציור.</div>';
+      result.style.display = 'block';
+    }
+    return;
+  }
   aiImageMime = file.type || 'image/jpeg';
   const reader = new FileReader();
   reader.onload = ev => {
@@ -1651,7 +1659,9 @@ async function aiAnalyzeImage() {
   };
   const selected = [...document.querySelectorAll('.ai-aspect-btn.selected')].map(b => b.dataset.a);
   const aspects = selected.map(a => `• ${aspectLabels[a]}`).join('\n');
-  const prompt = `נתחי את הציור/התמונה בפירוט רב לפי ההיבטים הבאים:\n\n${aspects}\n\nלכל היבט:\n- כותרת ## עם שם ההיבט\n- תיאור מה קיים בציור\n- הערכה: **חזק** / **דורש שיפור**\n- טיפ ספציפי לשיפור\n\nענה בעברית בלבד. השתמשי ב-Markdown.`;
+  const prompt = `**חשוב מאוד:** אם אינך יכול לראות את התמונה, אם הקובץ הוא סרטון/PDF/פורמט שאינך תומך בו, או אם התמונה לא ברורה — כתוב בדיוק: "❌ לא הצלחתי לראות את הקובץ. אנא העלי תמונה בפורמט JPG, PNG או WEBP." ואל תמשיך לנתח.
+
+רק אם אתה רואה את התמונה בבירור — נתח לפי ההיבטים הבאים:\n\n${aspects}\n\nלכל היבט:\n- כותרת ## עם שם ההיבט\n- תיאור מה קיים בציור\n- הערכה: **חזק** / **דורש שיפור**\n- טיפ ספציפי לשיפור\n\nענה בעברית בלבד. השתמשי ב-Markdown.`;
   const btn = document.getElementById('ai-img-btn');
   const result = document.getElementById('ai-img-result');
   btn.disabled = true; btn.textContent = '⏳ מנתח...';
