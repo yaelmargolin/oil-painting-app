@@ -152,7 +152,7 @@ body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-seri
 .ai-result{background:var(--card);border:1.5px solid var(--bd);border-radius:12px;padding:26px 30px;font-size:18px;color:var(--tx);line-height:1.85}
 .ai-image-wrap{display:grid;grid-template-columns:360px 1fr;min-height:calc(100vh - 220px)}
 .ai-image-left{padding:24px 22px;border-left:1px solid var(--bd);background:var(--sur);display:flex;flex-direction:column;gap:16px;overflow-y:auto}
-.ai-image-right{padding:32px 36px;display:flex;flex-direction:column;background:var(--bg)}
+.ai-image-right{padding:32px 36px;display:flex;flex-direction:column;background:var(--bg);overflow-y:auto}
 .ai-img-upload-area{border:2px dashed var(--bd);border-radius:14px;padding:26px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--ch);display:block}
 .ai-img-upload-area:hover,.ai-img-upload-area.has-img{border-color:var(--acc);border-style:solid}
 .ai-img-upload-icon{font-size:42px;margin-bottom:10px}
@@ -167,7 +167,7 @@ body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',Arial,sans-seri
 .ai-full-btn{background:linear-gradient(135deg,var(--acc2),var(--acc));color:#fff;border:none;border-radius:12px;padding:15px;font-size:18px;font-weight:700;cursor:pointer;transition:opacity .2s}
 .ai-full-btn:disabled{opacity:.4;cursor:default}
 .ai-response-hdr{font-size:22px;font-weight:800;color:var(--acc);margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid var(--bd)}
-.ai-response-area{flex:1;background:var(--card);border:1.5px solid var(--bd);border-radius:16px;padding:28px 34px;overflow-y:auto;font-size:19px;line-height:1.9;color:var(--tx);min-height:400px}
+.ai-response-area{background:var(--card);border:1.5px solid var(--bd);border-radius:16px;padding:28px 34px;overflow-y:auto;font-size:19px;line-height:1.9;color:var(--tx);min-height:400px;max-height:calc(100vh - 320px)}
 .ai-response-placeholder{color:var(--tx2);text-align:center;padding:80px 20px;font-size:18px;opacity:.7}
 .ai-response-loading{color:var(--tx2);text-align:center;padding:80px 20px;font-size:18px;font-style:italic}
 .ai-response-error{color:#c03820;background:rgba(192,56,32,.08);border:1px solid rgba(192,56,32,.3);border-radius:10px;padding:18px;font-size:17px}
