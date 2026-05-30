@@ -1329,6 +1329,8 @@ function painterDelete(id) {
 
 let fbDB = null;
 let fbUnsubscribe = null;
+let fbLastError = null;   // last Firebase error — shown in debug panel
+let fbLastSync  = null;   // timestamp of last successful onSnapshot
 
 function fbConfigGet() {
   try { return JSON.parse(localStorage.getItem('fb_config') || 'null'); }
@@ -1350,13 +1352,18 @@ function fbInit() {
         const list = snap.docs
           .map(d => { const v = d.data(); return { id:d.id, date:v.date, thumb:v.thumb||null, fullImg:v.fullImg||null, text:v.text }; })
           .sort((a, b) => Number(b.id) - Number(a.id));
+        fbLastSync = new Date().toLocaleTimeString('he-IL');
         savedStore(list);
         // Refresh the saved tab if it is currently visible
         const el = document.getElementById('ai-saved-view');
         if (el && el.style.display !== 'none') el.innerHTML = renderSavedAnalyses();
         const tab = document.getElementById('ai-tab-saved');
         if (tab) tab.textContent = `📚 ניתוחים שמורים (${list.length})`;
-      }, err => console.error('[Firebase]', err.message));
+      }, err => {
+        fbLastError = err.message;
+        const s = document.getElementById('fb-status-text');
+        if (s) s.textContent = '🔴 Firebase שגיאה: ' + err.message;
+      });
   } catch(e) { console.error('[Firebase init]', e.message); }
 }
 
@@ -1368,7 +1375,11 @@ async function fbSave(entry) {
       fullImg: entry.fullImg || null, text: entry.text,
       ts: firebase.firestore.FieldValue.serverTimestamp()
     });
-  } catch(e) { console.error('[Firebase save]', e.message); }
+  } catch(e) {
+    fbLastError = e.message;
+    const s = document.getElementById('fb-status-text');
+    if (s) s.textContent = '🔴 שגיאת שמירה: ' + e.message;
+  }
 }
 
 function fbFetchNow(containerEl) {
@@ -1388,6 +1399,49 @@ function fbFetchNow(containerEl) {
       if (tabBtn) tabBtn.textContent = `📚 ניתוחים שמורים (${list.length})`;
     })
     .catch(err => console.error('[Firebase fetch]', err.message));
+}
+
+function fbShowDebug() {
+  const localCount = savedLoad().length;
+  const cfg = fbConfigGet();
+  const modal = document.createElement('div');
+  modal.className = 'fb-modal-bg';
+  modal.innerHTML = `<div class="fb-modal" id="fb-debug-modal">
+    <h3>🔧 Firebase Debug</h3>
+    <div id="fb-debug-body" style="font-size:15px;line-height:2;color:var(--tx)">
+      <b>fbDB:</b> ${fbDB ? '✅ מחובר' : '❌ null — Firebase לא אותחל'}<br>
+      <b>projectId:</b> ${cfg?.projectId || '—'}<br>
+      <b>localStorage:</b> ${localCount} ניתוחים<br>
+      <b>סנכרון אחרון:</b> ${fbLastSync || 'לא קרה עדיין'}<br>
+      <b>שגיאה אחרונה:</b> <span style="color:#c03820">${fbLastError || 'אין'}</span><br>
+      <b>Firestore docs:</b> <span id="fb-debug-count">בודק...</span>
+    </div>
+    <div class="fb-modal-row" style="margin-top:16px;flex-wrap:wrap;gap:8px">
+      <button class="fb-modal-save" style="font-size:14px;padding:8px 16px" onclick="fbDebugTestWrite()">✍️ בדיקת כתיבה</button>
+      <button class="fb-modal-save" style="font-size:14px;padding:8px 16px;background:var(--sur);color:var(--tx)" onclick="fbFetchNow();this.textContent='✅ רועדן!'">🔄 משוך מ-Firestore</button>
+      <button class="fb-modal-cancel" onclick="this.closest('.fb-modal-bg').remove()">סגור</button>
+    </div>
+  </div>`;
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
+  // Count docs in Firestore
+  if (fbDB) {
+    fbDB.collection('analyses').get()
+      .then(s => { const el = document.getElementById('fb-debug-count'); if(el) el.textContent = s.size + ' ניתוחים'; })
+      .catch(e => { const el = document.getElementById('fb-debug-count'); if(el) el.textContent = '❌ ' + e.message; });
+  } else {
+    const el = document.getElementById('fb-debug-count'); if(el) el.textContent = 'N/A';
+  }
+}
+
+async function fbDebugTestWrite() {
+  if (!fbDB) { alert('fbDB is null — Firebase לא אותחל'); return; }
+  try {
+    await fbDB.collection('_debug').doc('ping').set({ ts: firebase.firestore.FieldValue.serverTimestamp() });
+    alert('✅ כתיבה לFirestore הצליחה! הרשאות תקינות.');
+  } catch(e) {
+    alert('❌ כתיבה נכשלה: ' + e.message + '\n\nבדקי את הגדרות Firestore Rules.');
+  }
 }
 
 async function fbDeleteDoc(id) {
@@ -1578,6 +1632,7 @@ function renderAI() {
         ? '☁️ Firebase מחובר — ניתוחים מסונכרנים אוטומטית בין כל המכשירים'
         : '⚫ ניתוחים נשמרים רק במכשיר זה — הגדרי Firebase לסנכרון אוטומטי'}</span>
       <button class="fb-setup-link" onclick="fbOpenSetup()">${fbConnected ? '⚙ שנה הגדרות' : '☁️ חברי Firebase'}</button>
+      ${fbConnected ? `<button class="fb-setup-link" style="background:none;border-color:var(--bd)" onclick="fbShowDebug()">🔧 דיבאג</button>` : ''}
     </div>
     <div class="ai-tabs">
       <button class="ai-tab active" id="ai-tab-chat" onclick="switchAITab('chat')">💬 שאלות</button>
