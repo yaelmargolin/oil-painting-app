@@ -265,6 +265,8 @@ textarea.pform-input{resize:vertical;min-height:90px;line-height:1.6}
 .saved-modal-body{display:flex;gap:24px;padding:24px;flex-wrap:wrap}
 .saved-modal-img{width:260px;border-radius:10px;object-fit:contain;flex-shrink:0;align-self:flex-start;border:1px solid var(--bd)}
 .saved-modal-text{flex:1;min-width:260px}
+.saved-modal-chat{padding:20px 24px 24px;border-top:2px solid var(--bd);margin-top:4px}
+.saved-modal-chat-title{font-size:18px;font-weight:700;color:var(--tx2);margin-bottom:0.9rem}
 @media(max-width:600px){.saved-wrap{padding:16px}.saved-modal-body{flex-direction:column}.saved-modal-img{width:100%}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
@@ -1353,7 +1355,7 @@ function fbInit() {
       .onSnapshot(snap => {
         // Sort newest-first by id (which is Date.now() string)
         const list = snap.docs
-          .map(d => { const v = d.data(); return { id:d.id, date:v.date, thumb:v.thumb||null, fullImg:v.fullImg||null, text:v.text }; })
+          .map(d => { const v = d.data(); return { id:d.id, date:v.date, thumb:v.thumb||null, fullImg:v.fullImg||null, text:v.text, chat:v.chat||[] }; })
           .sort((a, b) => Number(b.id) - Number(a.id));
         fbLastSync = new Date().toLocaleTimeString('he-IL');
         savedStore(list);
@@ -1387,6 +1389,7 @@ async function fbSave(entry) {
     await fbDB.collection('analyses').doc(entry.id).set({
       date: entry.date, thumb: entry.thumb || null,
       fullImg: entry.fullImg || null, text: entry.text,
+      chat: entry.chat || [],
       ts: firebase.firestore.FieldValue.serverTimestamp()
     });
   } catch(e) {
@@ -1421,7 +1424,7 @@ function fbFetchNow(containerEl) {
   fbDB.collection('analyses').limit(SAVED_MAX).get()
     .then(snap => {
       const list = snap.docs
-        .map(d => { const v = d.data(); return { id:d.id, date:v.date, thumb:v.thumb||null, fullImg:v.fullImg||null, text:v.text }; })
+        .map(d => { const v = d.data(); return { id:d.id, date:v.date, thumb:v.thumb||null, fullImg:v.fullImg||null, text:v.text, chat:v.chat||[] }; })
         .sort((a, b) => Number(b.id) - Number(a.id));
       savedStore(list);
       el.innerHTML = renderSavedAnalyses();
@@ -1564,7 +1567,8 @@ async function savedAddAnalysis(responseText) {
     date: new Date().toLocaleDateString('he-IL', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
     thumb,
     fullImg,
-    text: responseText
+    text: responseText,
+    chat: []
   };
   list.unshift(entry);
   if (list.length > SAVED_MAX) list.length = SAVED_MAX;
@@ -1598,6 +1602,12 @@ function renderSavedAnalyses() {
 function savedOpen(id) {
   const entry = savedLoad().find(e => e.id === id);
   if (!entry) return;
+  const chat = entry.chat || [];
+  const chatMsgsHtml = chat.map(m =>
+    m.role === 'user'
+      ? `<div class="img-followup-msg user">${esc(m.text)}</div>`
+      : `<div class="img-followup-msg bot"><div class="md-content">${mdParse(m.text)}</div></div>`
+  ).join('');
   const bg = document.createElement('div');
   bg.className = 'saved-modal-bg';
   bg.onclick = e => { if (e.target === bg) bg.remove(); };
@@ -1611,8 +1621,21 @@ function savedOpen(id) {
         ${entry.fullImg ? `<img class="saved-modal-img" src="${entry.fullImg}" alt="ציור"/>` : ''}
         <div class="saved-modal-text md-content">${mdParse(entry.text)}</div>
       </div>
+      <div class="saved-modal-chat">
+        <div class="saved-modal-chat-title">💬 המשיכי לשאול על הציור הזה</div>
+        <div class="img-followup-msgs" id="sd-msgs-${id}">${chatMsgsHtml}</div>
+        <div class="img-followup-row">
+          <textarea class="img-followup-input" id="sd-inp-${id}" rows="2"
+            placeholder="שאלי שאלה על הציור..."
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();savedDetailSend('${id}');}"></textarea>
+          <button class="img-followup-btn" id="sd-btn-${id}" onclick="savedDetailSend('${id}')">שלחי ↵</button>
+        </div>
+      </div>
     </div>`;
   document.body.appendChild(bg);
+  // Scroll to bottom of existing messages if any
+  const msgsEl = bg.querySelector(`#sd-msgs-${id}`);
+  if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
 }
 
 function savedDelete(id) {
@@ -1621,6 +1644,102 @@ function savedDelete(id) {
   fbDeleteDoc(id); // sync deletion to Firestore (no-op if Firebase not configured)
   const el = document.getElementById('ai-saved-view');
   if (el) el.innerHTML = renderSavedAnalyses();
+}
+
+async function savedUpdateChat(id, chat) {
+  const list = savedLoad();
+  const idx = list.findIndex(e => e.id === id);
+  if (idx === -1) return;
+  list[idx] = { ...list[idx], chat };
+  savedStore(list);
+  if (!fbDB) return;
+  try {
+    await fbDB.collection('analyses').doc(id).set({ chat }, { merge: true });
+  } catch(e) { console.warn('fbUpdateChat', e.message); }
+}
+
+async function savedDetailSend(id) {
+  const inp = document.getElementById(`sd-inp-${id}`);
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+
+  const entry = savedLoad().find(e => e.id === id);
+  if (!entry) return;
+
+  const msgs = document.getElementById(`sd-msgs-${id}`);
+  const btn = document.getElementById(`sd-btn-${id}`);
+
+  const userDiv = document.createElement('div');
+  userDiv.className = 'img-followup-msg user';
+  userDiv.textContent = text;
+  msgs.appendChild(userDiv);
+
+  const botDiv = document.createElement('div');
+  botDiv.className = 'img-followup-msg bot thinking';
+  botDiv.textContent = 'חושב...';
+  msgs.appendChild(botDiv);
+  msgs.scrollTop = msgs.scrollHeight;
+  btn.disabled = true;
+
+  const key = localStorage.getItem('gemini_key');
+  if (!key) {
+    botDiv.className = 'img-followup-msg bot';
+    botDiv.textContent = 'נא להזין מפתח API תחילה (בטאב ה-AI).';
+    btn.disabled = false;
+    return;
+  }
+
+  try {
+    const chat = entry.chat || [];
+    const contents = [];
+
+    // Seed context: image (if available) + analysis text as the opening exchange
+    if (entry.fullImg) {
+      const base64 = entry.fullImg.split(',')[1];
+      const mimeType = entry.fullImg.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
+      contents.push({
+        role: 'user',
+        parts: [
+          { inline_data: { mime_type: mimeType, data: base64 } },
+          { text: `ניתחת ציור זה וזהו הניתוח שלך:\n\n${entry.text}\n\nאנא ענה לשאלות על הציור.` }
+        ]
+      });
+    } else {
+      contents.push({
+        role: 'user',
+        parts: [{ text: `ניתחת ציור זה וזהו הניתוח שלך:\n\n${entry.text}\n\nאנא ענה לשאלות על הציור.` }]
+      });
+    }
+    contents.push({ role: 'model', parts: [{ text: entry.text }] });
+
+    // Previous chat turns
+    for (const m of chat) {
+      contents.push({ role: m.role, parts: [{ text: m.text }] });
+    }
+
+    // New user message
+    contents.push({ role: 'user', parts: [{ text }] });
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system_instruction: { parts: [{ text: AI_SYSTEM }] }, contents }) }
+    );
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'לא התקבלה תשובה.';
+
+    botDiv.className = 'img-followup-msg bot';
+    botDiv.innerHTML = `<div class="md-content">${mdParse(reply)}</div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+
+    await savedUpdateChat(id, [...chat, { role: 'user', text }, { role: 'model', text: reply }]);
+  } catch(e) {
+    botDiv.className = 'img-followup-msg bot';
+    botDiv.textContent = 'שגיאה: ' + e.message;
+  }
+  btn.disabled = false;
 }
 
 function mdParse(text) {
