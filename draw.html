@@ -1283,8 +1283,10 @@ function painterAdd() {
   const url  = document.getElementById('p-url').value.trim();
   const desc = document.getElementById('p-desc').value.trim();
   const list = paintersLoad();
-  list.unshift({ id: Date.now().toString(), name, url, desc });
+  const entry = { id: Date.now().toString(), name, url, desc };
+  list.unshift(entry);
   paintersSave(list);
+  fbSavePainter(entry);
 
   // clear form
   nameEl.value = '';
@@ -1320,6 +1322,7 @@ function painterDelete(id) {
   if (!confirm('למחוק את הצייר הזה מהרשימה?')) return;
   const list = paintersLoad().filter(p => p.id !== id);
   paintersSave(list);
+  fbDeletePainter(id);
   render();
 }
 
@@ -1364,6 +1367,17 @@ function fbInit() {
         const s = document.getElementById('fb-status-text');
         if (s) s.textContent = '🔴 Firebase שגיאה: ' + err.message;
       });
+
+    // ── Listener: painters list ───────────────────────────────────────────
+    fbDB.collection('painters')
+      .onSnapshot(snap => {
+        const list = snap.docs
+          .map(d => { const v = d.data(); return { id:d.id, name:v.name, url:v.url||'', desc:v.desc||'' }; })
+          .sort((a, b) => Number(b.id) - Number(a.id));
+        paintersSave(list);
+        if (view === 'painters') render();
+      }, err => { fbLastError = err.message; });
+
   } catch(e) { console.error('[Firebase init]', e.message); }
 }
 
@@ -1380,6 +1394,22 @@ async function fbSave(entry) {
     const s = document.getElementById('fb-status-text');
     if (s) s.textContent = '🔴 שגיאת שמירה: ' + e.message;
   }
+}
+
+async function fbSavePainter(entry) {
+  if (!fbDB) return;
+  try {
+    await fbDB.collection('painters').doc(entry.id).set({
+      name: entry.name, url: entry.url || '', desc: entry.desc || '',
+      ts: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) { fbLastError = e.message; }
+}
+
+async function fbDeletePainter(id) {
+  if (!fbDB) return;
+  try { await fbDB.collection('painters').doc(id).delete(); }
+  catch(e) { fbLastError = e.message; }
 }
 
 function fbFetchNow(containerEl) {
@@ -1411,7 +1441,7 @@ function fbShowDebug() {
     <div id="fb-debug-body" style="font-size:15px;line-height:2;color:var(--tx)">
       <b>fbDB:</b> ${fbDB ? '✅ מחובר' : '❌ null — Firebase לא אותחל'}<br>
       <b>projectId:</b> ${cfg?.projectId || '—'}<br>
-      <b>localStorage:</b> ${localCount} ניתוחים<br>
+      <b>localStorage analyses:</b> ${localCount} | <b>painters:</b> ${paintersLoad().length}<br>
       <b>סנכרון אחרון:</b> ${fbLastSync || 'לא קרה עדיין'}<br>
       <b>שגיאה אחרונה:</b> <span style="color:#c03820">${fbLastError || 'אין'}</span><br>
       <b>Firestore docs:</b> <span id="fb-debug-count">בודק...</span>
@@ -1485,20 +1515,15 @@ async function fbSaveConfig() {
     btn.textContent = '⏳ מעלה נתונים...'; btn.disabled = true;
     if (firebase.apps.length === 0) firebase.initializeApp(cfg);
     const db = firebase.firestore();
-    const local = savedLoad();
-    // Upload each entry individually — skip any that fail (too large, etc.)
-    // Each upload has a 5-second timeout so we never get stuck
-    for (const entry of local) {
+    const migrate = (col, docs) => Promise.all(docs.map(entry => {
       const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000));
-      const upload = db.collection('analyses').doc(entry.id).set({
-        date: entry.date, thumb: entry.thumb||null,
-        fullImg: entry.fullImg||null, text: entry.text,
-        ts: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      await Promise.race([upload, timeout]).catch(err => {
-        console.warn('[fb migrate] skipped entry', entry.id, err.message);
-      });
-    }
+      return Promise.race([db.collection(col).doc(entry.id).set({
+        ...entry, ts: firebase.firestore.FieldValue.serverTimestamp()
+      }), timeout]).catch(err => console.warn('[fb migrate]', col, entry.id, err.message));
+    }));
+
+    await migrate('analyses', savedLoad());
+    await migrate('painters', paintersLoad());
     document.querySelector('.fb-modal-bg')?.remove();
     location.reload();
   } catch(e) { alert('שגיאה: ' + e.message); if(btn){btn.textContent='☁️ חברי';btn.disabled=false;} }
