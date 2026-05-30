@@ -243,7 +243,7 @@ textarea.pform-input{resize:vertical;min-height:90px;line-height:1.6}
 @media(max-width:600px){.painters-grid{grid-template-columns:1fr}}
 /* ── Saved Analyses ── */
 .saved-wrap{padding:28px 32px;max-width:1100px}
-.saved-hdr{font-size:22px;font-weight:800;color:var(--acc);margin-bottom:22px}
+.saved-hdr{font-size:22px;font-weight:800;color:var(--acc);margin-bottom:22px;display:flex;align-items:center;gap:12px}
 .saved-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
 .saved-card{background:var(--card);border:1.5px solid var(--bd);border-radius:14px;overflow:hidden;cursor:pointer;transition:box-shadow .2s,transform .2s}
 .saved-card:hover{box-shadow:0 8px 24px #0004;transform:translateY(-3px)}
@@ -1371,6 +1371,25 @@ async function fbSave(entry) {
   } catch(e) { console.error('[Firebase save]', e.message); }
 }
 
+function fbFetchNow(containerEl) {
+  // Direct one-time fetch from Firestore — used when opening the saved tab
+  // so we always show the latest data from all devices, not just the cache.
+  if (!fbDB) return;
+  const el = containerEl || document.getElementById('ai-saved-view');
+  if (!el) return;
+  fbDB.collection('analyses').limit(SAVED_MAX).get()
+    .then(snap => {
+      const list = snap.docs
+        .map(d => { const v = d.data(); return { id:d.id, date:v.date, thumb:v.thumb||null, fullImg:v.fullImg||null, text:v.text }; })
+        .sort((a, b) => Number(b.id) - Number(a.id));
+      savedStore(list);
+      el.innerHTML = renderSavedAnalyses();
+      const tabBtn = document.getElementById('ai-tab-saved');
+      if (tabBtn) tabBtn.textContent = `📚 ניתוחים שמורים (${list.length})`;
+    })
+    .catch(err => console.error('[Firebase fetch]', err.message));
+}
+
 async function fbDeleteDoc(id) {
   if (!fbDB) return;
   try { await fbDB.collection('analyses').doc(id).delete(); }
@@ -1489,7 +1508,10 @@ function renderSavedAnalyses() {
       <button class="saved-card-del" onclick="event.stopPropagation();savedDelete('${e.id}')">🗑 מחק</button>
     </div>`).join('');
   return `<div class="saved-wrap">
-    <div class="saved-hdr">📚 ניתוחים שמורים (${list.length} / ${SAVED_MAX})</div>
+    <div class="saved-hdr">
+      <span>📚 ניתוחים שמורים (${list.length} / ${SAVED_MAX})</span>
+      ${fbDB ? `<button class="fb-setup-link" style="font-size:13px;padding:3px 10px" onclick="fbFetchNow()">🔄 רענן מהענן</button>` : ''}
+    </div>
     <div class="saved-grid">${cards}</div>
   </div>`;
 }
@@ -1675,7 +1697,10 @@ function switchAITab(tab) {
   ['chat','article','image','saved'].forEach(t => document.getElementById('ai-tab-'+t).classList.toggle('active', t === tab));
   if (tab === 'saved') {
     const el = document.getElementById('ai-saved-view');
-    if (el) el.innerHTML = renderSavedAnalyses();
+    if (el) {
+      el.innerHTML = renderSavedAnalyses(); // show cached data immediately
+      if (fbDB) fbFetchNow(el);            // then pull fresh data from Firestore
+    }
   }
 }
 
