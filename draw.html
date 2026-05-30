@@ -1604,6 +1604,16 @@ function renderAI() {
         <textarea class="ai-article-area" id="ai-article-text" placeholder="הדביקי כאן טקסט של מאמר, ספר, מדריך..."></textarea>
         <button class="ai-analyze-btn" id="ai-analyze-btn" onclick="aiAnalyzeArticle()">🔍 נתחי מאמר — מה ניתן להוסיף לאתר?</button>
         <div class="ai-result" id="ai-result" style="display:none"></div>
+        <div id="ai-article-followup" style="display:none" class="img-followup">
+          <div class="img-followup-title">💬 המשיכי את השיחה על המאמר</div>
+          <div class="img-followup-msgs" id="article-followup-msgs"></div>
+          <div class="img-followup-row">
+            <textarea class="img-followup-input" id="article-followup-input"
+              placeholder="שאלי שאלה נוספת על המאמר..." rows="2"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();articleFollowupSend();}"></textarea>
+            <button class="img-followup-btn" id="article-followup-btn" onclick="articleFollowupSend()">שלחי ↵</button>
+          </div>
+        </div>
       </div>
     </div>
     <div id="ai-image-view" style="display:none">
@@ -1687,7 +1697,8 @@ const AI_SYSTEM = `אתה עוזר מומחה לאמנות הציור, בעיק�
 
 let aiHistory = [];
 let aiImageBase64 = null, aiImageMime = 'image/jpeg', aiImageDataUrl = null;
-let imgChatHistory = []; // conversation history for follow-up chat about the current painting
+let imgChatHistory     = []; // follow-up chat history for the current painting
+let articleChatHistory = []; // follow-up chat history for the current article
 
 function switchAITab(tab) {
   document.getElementById('ai-chat-view').style.display    = tab === 'chat'    ? 'block' : 'none';
@@ -1915,9 +1926,54 @@ async function aiAnalyzeArticle() {
   btn.disabled = true;
   result.style.display = 'block';
   result.innerHTML = '<div class="ai-response-loading">⏳ מנתח מאמר...</div>';
+  // Hide follow-up from any previous analysis
+  const fu = document.getElementById('ai-article-followup');
+  if (fu) fu.style.display = 'none';
+  articleChatHistory = [];
   const prompt = `הנה מאמר/טקסט על ציור:\n\n${text.slice(0,8000)}\n\n## נקודות מפתח מהמאמר\nרשמי 3-5 נקודות מרכזיות\n\n## המלצות להוספה לאתר\nמה חשוב שטרם מכוסה?\n\n## מושגים מעניינים להרחבה\nמושגים שכדאי לפרט עליהם\n\nענה בעברית עם Markdown — ## לכותרות, ** להדגשות, - לנקודות.`;
   const reply = await callGemini([{ role: 'user', text: prompt }]);
   result.innerHTML = '<div class="md-content">' + mdParse(reply) + '</div>';
+  // Seed history so follow-up questions have full context of article + analysis
+  articleChatHistory = [
+    { role: 'user', text: prompt },
+    { role: 'model', text: reply }
+  ];
+  if (fu) {
+    document.getElementById('article-followup-msgs').innerHTML = '';
+    fu.style.display = 'block';
+  }
+  btn.disabled = false;
+}
+
+async function articleFollowupSend() {
+  const inp = document.getElementById('article-followup-input');
+  const text = inp.value.trim();
+  if (!text || articleChatHistory.length === 0) return;
+  inp.value = '';
+
+  const msgs = document.getElementById('article-followup-msgs');
+
+  const userDiv = document.createElement('div');
+  userDiv.className = 'img-followup-msg user';
+  userDiv.textContent = text;
+  msgs.appendChild(userDiv);
+
+  const botDiv = document.createElement('div');
+  botDiv.className = 'img-followup-msg bot thinking';
+  botDiv.textContent = '⏳ חושב...';
+  msgs.appendChild(botDiv);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  const btn = document.getElementById('article-followup-btn');
+  btn.disabled = true;
+
+  articleChatHistory.push({ role: 'user', text });
+  const reply = await callGemini(articleChatHistory);
+  articleChatHistory.push({ role: 'model', text: reply });
+
+  botDiv.className = 'img-followup-msg bot';
+  botDiv.innerHTML = '<div class="md-content">' + mdParse(reply) + '</div>';
+  msgs.scrollTop = msgs.scrollHeight;
   btn.disabled = false;
 }
 
