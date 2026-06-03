@@ -268,6 +268,18 @@ textarea.pform-input{resize:vertical;min-height:90px;line-height:1.6}
 .saved-modal-chat{padding:20px 24px 24px;border-top:2px solid var(--bd);margin-top:4px}
 .saved-modal-chat-title{font-size:18px;font-weight:700;color:var(--tx2);margin-bottom:0.9rem}
 @media(max-width:600px){.saved-wrap{padding:16px}.saved-modal-body{flex-direction:column}.saved-modal-img{width:100%}}
+/* ── Notes Form ── */
+.notes-section{background:var(--sur);border:1.5px solid var(--bd);border-radius:14px;padding:22px 26px;margin-top:28px}
+.notes-title{font-size:18px;font-weight:700;color:var(--acc);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.notes-saved-badge{font-size:13px;font-weight:600;color:#3a8a3a;background:#e8f8e0;border:1px solid #5a9a5a;border-radius:20px;padding:3px 12px;opacity:0;transition:opacity .4s}
+.notes-saved-badge.show{opacity:1}
+.notes-textarea{width:100%;min-height:130px;background:var(--bg);border:1.5px solid var(--bd);color:var(--tx);border-radius:10px;padding:14px 16px;font-size:17px;font-family:inherit;line-height:1.75;resize:vertical;direction:rtl;transition:border-color .2s}
+.notes-textarea:focus{outline:none;border-color:var(--acc)}
+.notes-btn-row{display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap}
+.notes-save-btn{background:linear-gradient(135deg,var(--acc2),var(--acc));color:#fff;border:none;border-radius:10px;padding:11px 28px;font-size:17px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.notes-save-btn:hover{opacity:.85}
+.notes-clear-btn{background:none;border:1.5px solid var(--bd);color:var(--tx2);border-radius:10px;padding:11px 18px;font-size:16px;cursor:pointer;transition:all .2s}
+.notes-clear-btn:hover{border-color:#c03820;color:#c03820}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1071,6 +1083,34 @@ const OIL_PAINTING = [
   }
 ];
 
+/* ── Notes ── */
+function notesKey(sec, id) { return 'note_' + sec + '_' + id; }
+function notesLoad(sec, id) { return localStorage.getItem(notesKey(sec, id)) || ''; }
+function notesSave(sec, id) {
+  const ta = document.getElementById('notes-ta');
+  if (!ta) return;
+  localStorage.setItem(notesKey(sec, id), ta.value);
+  const badge = document.getElementById('notes-badge');
+  if (badge) { badge.classList.add('show'); setTimeout(() => badge.classList.remove('show'), 1800); }
+}
+function notesClear(sec, id) {
+  if (!confirm('למחוק את כל ההערות לתת-קטגוריה זו?')) return;
+  localStorage.removeItem(notesKey(sec, id));
+  const ta = document.getElementById('notes-ta');
+  if (ta) ta.value = '';
+}
+function renderNotesForm(sec, id) {
+  const saved = notesLoad(sec, id).replace(/"/g, '&quot;');
+  return `<div class="notes-section">
+    <div class="notes-title">📝 הערות אישיות <span id="notes-badge" class="notes-saved-badge">נשמר ✓</span></div>
+    <textarea id="notes-ta" class="notes-textarea" placeholder="כתבי או הדביקי כאן מידע נוסף, טיפים, קישורים, ציטוטים…" oninput="notesSave('${sec}','${id}')">${notesLoad(sec, id)}</textarea>
+    <div class="notes-btn-row">
+      <button class="notes-save-btn" onclick="notesSave('${sec}','${id}')">שמור</button>
+      <button class="notes-clear-btn" onclick="notesClear('${sec}','${id}')">נקה הכל</button>
+    </div>
+  </div>`;
+}
+
 /* ── State & Nav ── */
 let view = 'home', section = null, itemId = null;
 
@@ -1169,6 +1209,7 @@ function renderOilDetail(item) {
     <div class="svg-wrap">${item.svg}<div class="svg-lbl">איור הסבר</div></div>
     ${ex}${mk}${ms}
     <div class="tips"><div class="tips-t">💡 טיפים מעשיים</div><ul>${item.tips.map(t=>`<li>${t}</li>`).join('')}</ul></div>
+    ${renderNotesForm('oil', item.id)}
   </div>`;
 }
 
@@ -1189,7 +1230,8 @@ function renderDetail() {
     <div class="dsub">${item.sub}</div>
     <div class="dbody">${item.desc}</div>
     <div class="svg-wrap">${item.svg}<div class="svg-lbl">איור הסבר</div></div>
-    <div class="tips"><div class="tips-t">💡 טיפים</div><ul>${item.tips.map(t=>`<li>${t}</li>`).join('')}</ul></div>`;
+    <div class="tips"><div class="tips-t">💡 טיפים</div><ul>${item.tips.map(t=>`<li>${t}</li>`).join('')}</ul></div>
+    ${renderNotesForm(section, item.id)}`;
   } else if (isTut) {
     body += `<div class="dtitle">${item.icon} ${item.title}</div>
     <div class="dsub">${item.sub}</div>
@@ -1202,7 +1244,8 @@ function renderDetail() {
           <div class="step-svg">${s.svg}</div>
         </div>
       </div>`).join('')}
-    </div>`;
+    </div>
+    ${renderNotesForm(section, item.id)}`;
   } else {
     body += `<div class="dtitle">${item.icon} ${item.title}</div>
     <div class="art-hdr">
@@ -1216,7 +1259,8 @@ function renderDetail() {
       </div>
     </div>
     <div class="analysis-t">🔍 ניתוח טכני</div>
-    <div class="analysis-b">${item.analysis}</div>`;
+    <div class="analysis-b">${item.analysis}</div>
+    ${renderNotesForm(section, item.id)}`;
   }
 
   body += '</div>';
