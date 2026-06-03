@@ -1086,21 +1086,33 @@ const OIL_PAINTING = [
 /* ── Notes ── */
 function notesKey(sec, id) { return 'note_' + sec + '_' + id; }
 function notesLoad(sec, id) { return localStorage.getItem(notesKey(sec, id)) || ''; }
+
+let notesDebounceTimer = null;
+
 function notesSave(sec, id) {
   const ta = document.getElementById('notes-ta');
   if (!ta) return;
-  localStorage.setItem(notesKey(sec, id), ta.value);
+  const text = ta.value;
+  localStorage.setItem(notesKey(sec, id), text);
   const badge = document.getElementById('notes-badge');
   if (badge) { badge.classList.add('show'); setTimeout(() => badge.classList.remove('show'), 1800); }
+  // Debounce Firestore write — wait 1.5s after last keystroke
+  clearTimeout(notesDebounceTimer);
+  notesDebounceTimer = setTimeout(() => fbSaveNote(sec, id, text), 1500);
 }
-function notesClear(sec, id) {
+
+async function notesClear(sec, id) {
   if (!confirm('למחוק את כל ההערות לתת-קטגוריה זו?')) return;
   localStorage.removeItem(notesKey(sec, id));
   const ta = document.getElementById('notes-ta');
   if (ta) ta.value = '';
+  if (fbDB) {
+    try { await fbDB.collection('notes').doc(sec + '_' + id).delete(); }
+    catch(e) { fbLastError = e.message; }
+  }
 }
+
 function renderNotesForm(sec, id) {
-  const saved = notesLoad(sec, id).replace(/"/g, '&quot;');
   return `<div class="notes-section">
     <div class="notes-title">📝 הערות אישיות <span id="notes-badge" class="notes-saved-badge">נשמר ✓</span></div>
     <textarea id="notes-ta" class="notes-textarea" placeholder="כתבי או הדביקי כאן מידע נוסף, טיפים, קישורים, ציטוטים…" oninput="notesSave('${sec}','${id}')">${notesLoad(sec, id)}</textarea>
@@ -1424,6 +1436,25 @@ function fbInit() {
         if (view === 'painters') render();
       }, err => { fbLastError = err.message; });
 
+    // ── Listener: notes ───────────────────────────────────────────────────
+    fbDB.collection('notes').onSnapshot(snap => {
+      snap.docChanges().forEach(change => {
+        if (change.type === 'removed') {
+          localStorage.removeItem('note_' + change.doc.id);
+        } else {
+          const text = change.doc.data().text || '';
+          localStorage.setItem('note_' + change.doc.id, text);
+          // Update visible textarea if it belongs to this note
+          const ta = document.getElementById('notes-ta');
+          if (ta && view === 'detail' && section && itemId) {
+            if ((section + '_' + itemId) === change.doc.id && ta.value !== text) {
+              ta.value = text;
+            }
+          }
+        }
+      });
+    }, err => { fbLastError = err.message; });
+
   } catch(e) { console.error('[Firebase init]', e.message); }
 }
 
@@ -1441,6 +1472,16 @@ async function fbSave(entry) {
     const s = document.getElementById('fb-status-text');
     if (s) s.textContent = '🔴 שגיאת שמירה: ' + e.message;
   }
+}
+
+async function fbSaveNote(sec, id, text) {
+  if (!fbDB) return;
+  try {
+    await fbDB.collection('notes').doc(sec + '_' + id).set({
+      text: text,
+      ts: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) { fbLastError = e.message; }
 }
 
 async function fbSavePainter(entry) {
