@@ -289,6 +289,11 @@ textarea.pform-input{resize:vertical;min-height:90px;line-height:1.6}
 .note-card-del{background:none;border:1px solid var(--bd);color:var(--tx2);border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;transition:all .2s}
 .note-card-del:hover{border-color:#c03820;color:#c03820}
 .notes-empty{text-align:center;padding:24px;color:var(--tx2);font-size:16px;opacity:.6}
+/* ── Sub-criterion Notes ── */
+.subnote-label{font-size:12px;color:var(--tx2);margin-top:12px;opacity:.75}
+.subnote-box{width:100%;min-height:64px;background:var(--bg);border:1.5px solid var(--bd);color:var(--tx);border-radius:8px;padding:9px 12px;font-size:15px;font-family:inherit;line-height:1.6;resize:vertical;direction:rtl;margin-top:4px;transition:border-color .2s}
+.subnote-box:focus{outline:none;border-color:var(--acc)}
+.subnote-saved{font-size:11px;color:var(--tx2);opacity:.6;margin-top:3px;min-height:14px;text-align:left;direction:ltr}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1166,6 +1171,31 @@ function renderNotesForm(sec, id) {
   </div>`;
 }
 
+/* ── Sub-criterion Notes ── */
+const _snTimers = {};
+
+function subnoteInput(key, val) {
+  localStorage.setItem(key, val);
+  clearTimeout(_snTimers[key]);
+  const savedEl = document.getElementById('sns_' + key);
+  if (savedEl) savedEl.textContent = '';
+  _snTimers[key] = setTimeout(() => {
+    fbSaveSubnote(key, val);
+    if (savedEl) savedEl.textContent = '✓ נשמר';
+    setTimeout(() => { if (savedEl) savedEl.textContent = ''; }, 1500);
+  }, 800);
+}
+
+async function fbSaveSubnote(key, text) {
+  if (!fbDB) return;
+  try {
+    await fbDB.collection('subnotes').doc(key).set({
+      text,
+      ts: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) { fbLastError = e.message; }
+}
+
 /* ── State & Nav ── */
 let view = 'home', section = null, itemId = null;
 
@@ -1260,7 +1290,7 @@ function renderOilDetail(item) {
     <div class="dtitle">${item.icon} ${item.title}</div>
     <div class="dsub">${item.sub}</div>
     <div class="oil-intro">${item.intro}</div>
-    <div class="oil-details">${item.details.map(d=>`<div class="oil-card"><h4>${d.h}</h4><p>${d.t}</p></div>`).join('')}</div>
+    <div class="oil-details">${item.details.map((d,idx)=>{const key=`subnote_oil_${item.id}_${idx}`;const val=localStorage.getItem(key)||'';return`<div class="oil-card"><h4>${d.h}</h4><p>${d.t}</p><div class="subnote-label">📝 הערות אישיות</div><textarea id="sn_${key}" class="subnote-box" placeholder="הערות, קישורים, תזכורות…" oninput="subnoteInput('${key}',this.value)">${esc(val)}</textarea><div id="sns_${key}" class="subnote-saved"></div></div>`;}).join('')}</div>
     <div class="svg-wrap">${item.svg}<div class="svg-lbl">איור הסבר</div></div>
     ${ex}${mk}${ms}
     <div class="tips"><div class="tips-t">💡 טיפים מעשיים</div><ul>${item.tips.map(t=>`<li>${t}</li>`).join('')}</ul></div>
@@ -1493,6 +1523,21 @@ function fbInit() {
               if (listEl) listEl.innerHTML = renderNotesList(section, itemId, items);
             }
           }
+        }
+      });
+    }, err => { fbLastError = err.message; });
+
+    // ── Listener: sub-criterion notes ────────────────────────────────────
+    fbDB.collection('subnotes').onSnapshot(snap => {
+      snap.docChanges().forEach(change => {
+        const key = change.doc.id;
+        if (change.type === 'removed') {
+          localStorage.removeItem(key);
+        } else {
+          const text = change.doc.data().text || '';
+          localStorage.setItem(key, text);
+          const el = document.getElementById('sn_' + key);
+          if (el && document.activeElement !== el) el.value = text;
         }
       });
     }, err => { fbLastError = err.message; });
