@@ -1484,7 +1484,7 @@ function fbInit() {
       .onSnapshot(snap => {
         // Sort newest-first by id (which is Date.now() string)
         const list = snap.docs
-          .map(d => { const v = d.data(); return { id:d.id, date:v.date, thumb:v.thumb||null, fullImg:v.fullImg||null, text:v.text, chat:v.chat||[] }; })
+          .map(d => { const v = d.data(); return { id:d.id, type:v.type||'painting', date:v.date, thumb:v.thumb||null, fullImg:v.fullImg||null, text:v.text, articlePreview:v.articlePreview||null, chat:v.chat||[] }; })
           .sort((a, b) => Number(b.id) - Number(a.id));
         fbLastSync = new Date().toLocaleTimeString('he-IL');
         savedStore(list);
@@ -1596,7 +1596,7 @@ function fbFetchNow(containerEl) {
   fbDB.collection('analyses').limit(SAVED_MAX).get()
     .then(snap => {
       const list = snap.docs
-        .map(d => { const v = d.data(); return { id:d.id, date:v.date, thumb:v.thumb||null, fullImg:v.fullImg||null, text:v.text, chat:v.chat||[] }; })
+        .map(d => { const v = d.data(); return { id:d.id, type:v.type||'painting', date:v.date, thumb:v.thumb||null, fullImg:v.fullImg||null, text:v.text, articlePreview:v.articlePreview||null, chat:v.chat||[] }; })
         .sort((a, b) => Number(b.id) - Number(a.id));
       savedStore(list);
       el.innerHTML = renderSavedAnalyses();
@@ -1753,15 +1753,24 @@ function renderSavedAnalyses() {
   if (list.length === 0) {
     return `<div class="saved-wrap"><div class="saved-empty">עדיין לא נשמרו ניתוחים.<br>נתחי ציור בטאב "ניתוח ציור" — הניתוח יישמר אוטומטית כאן.</div></div>`;
   }
-  const cards = list.map(e => `
-    <div class="saved-card" onclick="savedOpen('${e.id}')">
-      ${e.thumb ? `<img class="saved-thumb" src="${e.thumb}" alt="ציור"/>` : `<div class="saved-thumb-ph">🖼</div>`}
+  const cards = list.map(e => {
+    const typeIcon = e.type === 'article' ? '📄' : e.type === 'chat' ? '💬' : '🖼';
+    const thumb = e.thumb
+      ? `<img class="saved-thumb" src="${e.thumb}" alt="ציור"/>`
+      : `<div class="saved-thumb-ph">${typeIcon}</div>`;
+    const typeLabel = e.type === 'article' ? '📄 ניתוח מאמר' : e.type === 'chat' ? '💬 שיחה' : '🖼 ניתוח ציור';
+    const preview = e.type === 'chat'
+      ? esc((e.chat||[]).find(m=>m.role==='user')?.text||e.text||'').slice(0,120)
+      : e.text.replace(/<[^>]+>/g,'').slice(0,120);
+    return `<div class="saved-card" onclick="savedOpen('${e.id}')">
+      ${thumb}
       <div class="saved-card-body">
-        <div class="saved-card-date">${esc(e.date)}</div>
-        <div class="saved-card-preview">${e.text.replace(/<[^>]+>/g,'').slice(0,120)}...</div>
+        <div class="saved-card-date" style="display:flex;justify-content:space-between"><span>${esc(e.date)}</span><span style="font-size:12px;opacity:.7">${typeLabel}</span></div>
+        <div class="saved-card-preview">${preview}...</div>
       </div>
       <button class="saved-card-del" onclick="event.stopPropagation();savedDelete('${e.id}')">🗑 מחק</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   return `<div class="saved-wrap">
     <div class="saved-hdr">
       <span>📚 ניתוחים שמורים (${list.length} / ${SAVED_MAX})</span>
@@ -1783,22 +1792,31 @@ function savedOpen(id) {
   const bg = document.createElement('div');
   bg.className = 'saved-modal-bg';
   bg.onclick = e => { if (e.target === bg) bg.remove(); };
+  const type = entry.type || 'painting';
+  const titleIcon = type === 'article' ? '📄 ניתוח מאמר' : type === 'chat' ? '💬 שיחה שמורה' : '📊 ניתוח ציור';
+  const chatTitle = type === 'article' ? '💬 המשיכי לשאול על המאמר' : type === 'chat' ? '💬 המשיכי את השיחה' : '💬 המשיכי לשאול על הציור הזה';
+  const placeholder = type === 'article' ? 'שאלי שאלה על המאמר...' : type === 'chat' ? 'המשיכי את השיחה...' : 'שאלי שאלה על הציור...';
+
+  const bodyContent = type === 'article'
+    ? `<div class="saved-modal-text md-content">${mdParse(entry.text)}</div>
+       ${entry.articlePreview ? `<details style="margin-top:14px"><summary style="cursor:pointer;color:var(--tx2);font-size:14px">📄 הצגת טקסט המאמר המנותח</summary><div style="white-space:pre-wrap;padding:12px;margin-top:8px;font-size:14px;color:var(--tx2);line-height:1.7;background:var(--sur);border-radius:8px">${esc(entry.articlePreview)}...</div></details>` : ''}`
+    : type === 'chat'
+    ? `<div class="saved-modal-text" style="color:var(--tx2);font-size:15px">שיחה עם ${chat.length} הודעות — המשיכי למטה</div>`
+    : `${entry.fullImg ? `<img class="saved-modal-img" src="${entry.fullImg}" alt="ציור"/>` : ''}<div class="saved-modal-text md-content">${mdParse(entry.text)}</div>`;
+
   bg.innerHTML = `
     <div class="saved-modal">
       <div class="saved-modal-hdr">
-        <div class="saved-modal-title">📊 ניתוח — ${esc(entry.date)}</div>
+        <div class="saved-modal-title">${titleIcon} — ${esc(entry.date)}</div>
         <button class="saved-modal-close" onclick="this.closest('.saved-modal-bg').remove()">✕ סגור</button>
       </div>
-      <div class="saved-modal-body">
-        ${entry.fullImg ? `<img class="saved-modal-img" src="${entry.fullImg}" alt="ציור"/>` : ''}
-        <div class="saved-modal-text md-content">${mdParse(entry.text)}</div>
-      </div>
+      <div class="saved-modal-body">${bodyContent}</div>
       <div class="saved-modal-chat">
-        <div class="saved-modal-chat-title">💬 המשיכי לשאול על הציור הזה</div>
+        <div class="saved-modal-chat-title">${chatTitle}</div>
         <div class="img-followup-msgs" id="sd-msgs-${id}">${chatMsgsHtml}</div>
         <div class="img-followup-row">
           <textarea class="img-followup-input" id="sd-inp-${id}" rows="2"
-            placeholder="שאלי שאלה על הציור..."
+            placeholder="${placeholder}"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();savedDetailSend('${id}');}"></textarea>
           <button class="img-followup-btn" id="sd-btn-${id}" onclick="savedDetailSend('${id}')">שלחי ↵</button>
         </div>
@@ -1865,29 +1883,30 @@ async function savedDetailSend(id) {
   try {
     const chat = entry.chat || [];
     const contents = [];
+    const type = entry.type || 'painting';
 
-    // Seed context: image (if available) + analysis text as the opening exchange
-    if (entry.fullImg) {
-      const base64 = entry.fullImg.split(',')[1];
-      const mimeType = entry.fullImg.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
-      contents.push({
-        role: 'user',
-        parts: [
-          { inline_data: { mime_type: mimeType, data: base64 } },
-          { text: `ניתחת ציור זה וזהו הניתוח שלך:\n\n${entry.text}\n\nאנא ענה לשאלות על הציור.` }
-        ]
-      });
+    if (type === 'chat') {
+      // Conversation type — just append to the ongoing history
+      for (const m of chat) {
+        contents.push({ role: m.role === 'model' ? 'model' : 'user', parts: [{ text: m.text }] });
+      }
+    } else if (type === 'article') {
+      // Article analysis — seed with article excerpt + analysis, then follow-up turns
+      const ctx = `הנה מאמר שניתחת:\n\n${entry.articlePreview||''}...\n\nהניתוח שלך:\n${entry.text}\n\nאנא ענה לשאלות על המאמר.`;
+      contents.push({ role: 'user', parts: [{ text: ctx }] });
+      contents.push({ role: 'model', parts: [{ text: entry.text }] });
+      for (const m of chat) { contents.push({ role: m.role, parts: [{ text: m.text }] }); }
     } else {
-      contents.push({
-        role: 'user',
-        parts: [{ text: `ניתחת ציור זה וזהו הניתוח שלך:\n\n${entry.text}\n\nאנא ענה לשאלות על הציור.` }]
-      });
-    }
-    contents.push({ role: 'model', parts: [{ text: entry.text }] });
-
-    // Previous chat turns
-    for (const m of chat) {
-      contents.push({ role: m.role, parts: [{ text: m.text }] });
+      // Painting type — seed with image (if available) + analysis
+      if (entry.fullImg) {
+        const base64 = entry.fullImg.split(',')[1];
+        const mimeType = entry.fullImg.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
+        contents.push({ role: 'user', parts: [{ inline_data: { mime_type: mimeType, data: base64 } }, { text: `ניתחת ציור זה וזהו הניתוח שלך:\n\n${entry.text}\n\nאנא ענה לשאלות על הציור.` }] });
+      } else {
+        contents.push({ role: 'user', parts: [{ text: `ניתחת ציור זה וזהו הניתוח שלך:\n\n${entry.text}\n\nאנא ענה לשאלות על הציור.` }] });
+      }
+      contents.push({ role: 'model', parts: [{ text: entry.text }] });
+      for (const m of chat) { contents.push({ role: m.role, parts: [{ text: m.text }] }); }
     }
 
     // New user message
@@ -1964,7 +1983,10 @@ function renderAI() {
         </div>
         <div class="ai-input-row">
           <textarea class="ai-input" id="ai-input" rows="3" placeholder="שאלי על טונאליות, צבע, עור, נוף..."></textarea>
-          <button class="ai-send" id="ai-send-btn" onclick="sendAIChat()">➤</button>
+          <div style="display:flex;flex-direction:column;gap:8px;align-self:flex-end">
+            <button class="ai-send" id="ai-send-btn" onclick="sendAIChat()">➤</button>
+            <button class="ai-send" style="font-size:14px;padding:8px 12px;background:var(--sur);color:var(--tx2);border:1.5px solid var(--bd)" onclick="newChatSession()" title="שיחה חדשה">🗑 חדש</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2068,8 +2090,66 @@ const AI_SYSTEM = `אתה עוזר מומחה לאמנות הציור, בעיק�
 
 let aiHistory = [];
 let aiImageBase64 = null, aiImageMime = 'image/jpeg', aiImageDataUrl = null;
-let imgChatHistory     = []; // follow-up chat history for the current painting
-let articleChatHistory = []; // follow-up chat history for the current article
+let imgChatHistory     = [];
+let articleChatHistory = [];
+let chatSessionId    = null;
+let currentArticleId = null;
+
+async function savedAddArticle(articleText, replyText) {
+  currentArticleId = Date.now().toString();
+  const entry = {
+    id: currentArticleId, type: 'article',
+    date: new Date().toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}),
+    articlePreview: articleText.slice(0, 400),
+    text: replyText, chat: []
+  };
+  const list = savedLoad();
+  list.unshift(entry);
+  if (list.length > SAVED_MAX) list.length = SAVED_MAX;
+  savedStore(list);
+  if (fbDB) {
+    try {
+      await fbDB.collection('analyses').doc(currentArticleId).set({
+        type:'article', date:entry.date, articlePreview:entry.articlePreview,
+        text:replyText, chat:[], ts:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e) { fbLastError = e.message; }
+  }
+  const t = document.getElementById('ai-tab-saved');
+  if (t) t.textContent = `📚 ניתוחים שמורים (${savedLoad().length})`;
+}
+
+async function chatSessionSave() {
+  if (!aiHistory.length) return;
+  if (!chatSessionId) chatSessionId = Date.now().toString();
+  const firstMsg = aiHistory.find(m => m.role === 'user')?.text || 'שיחה';
+  const entry = {
+    id: chatSessionId, type: 'chat',
+    date: new Date().toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}),
+    text: firstMsg.slice(0, 120), chat: aiHistory
+  };
+  const list = savedLoad();
+  const idx = list.findIndex(e => e.id === chatSessionId);
+  if (idx === -1) { list.unshift(entry); if (list.length > SAVED_MAX) list.length = SAVED_MAX; }
+  else list[idx] = entry;
+  savedStore(list);
+  if (fbDB) {
+    try {
+      await fbDB.collection('analyses').doc(chatSessionId).set({
+        type:'chat', date:entry.date, text:entry.text, chat:aiHistory,
+        ts:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e) { fbLastError = e.message; }
+  }
+  const t = document.getElementById('ai-tab-saved');
+  if (t) t.textContent = `📚 ניתוחים שמורים (${savedLoad().length})`;
+}
+
+function newChatSession() {
+  aiHistory = []; chatSessionId = null;
+  const box = document.getElementById('ai-msgs');
+  if (box) box.innerHTML = '<div class="ai-msg bot">שלום! שאלי אותי כל שאלה על ציור בצבעי שמן — טון, צבע, עור, נוף ועוד 🎨</div>';
+}
 
 function switchAITab(tab) {
   document.getElementById('ai-chat-view').style.display    = tab === 'chat'    ? 'block' : 'none';
@@ -2278,6 +2358,7 @@ async function sendAIChat() {
   thinking.remove();
   aiAddBot(reply);
   btn.disabled = false;
+  await chatSessionSave();
 }
 
 function aiLoadFile(e) {
@@ -2304,7 +2385,7 @@ async function aiAnalyzeArticle() {
   const prompt = `הנה מאמר/טקסט על ציור:\n\n${text.slice(0,8000)}\n\n## נקודות מפתח מהמאמר\nרשמי 3-5 נקודות מרכזיות\n\n## המלצות להוספה לאתר\nמה חשוב שטרם מכוסה?\n\n## מושגים מעניינים להרחבה\nמושגים שכדאי לפרט עליהם\n\nענה בעברית עם Markdown — ## לכותרות, ** להדגשות, - לנקודות.`;
   const reply = await callGemini([{ role: 'user', text: prompt }]);
   result.innerHTML = '<div class="md-content">' + mdParse(reply) + '</div>';
-  // Seed history so follow-up questions have full context of article + analysis
+  await savedAddArticle(text, reply);
   articleChatHistory = [
     { role: 'user', text: prompt },
     { role: 'model', text: reply }
@@ -2341,6 +2422,7 @@ async function articleFollowupSend() {
   articleChatHistory.push({ role: 'user', text });
   const reply = await callGemini(articleChatHistory);
   articleChatHistory.push({ role: 'model', text: reply });
+  if (currentArticleId) await savedUpdateChat(currentArticleId, articleChatHistory.slice(2));
 
   botDiv.className = 'img-followup-msg bot';
   botDiv.innerHTML = '<div class="md-content">' + mdParse(reply) + '</div>';
